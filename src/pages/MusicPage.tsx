@@ -1,7 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import playlist, { Song } from '@/data/playlist';
+
+function extractYoutubeId(input: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const p of patterns) {
+    const m = input.trim().match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
 
 const MusicPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,11 +21,21 @@ const MusicPage: React.FC = () => {
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const isYoutubeUrl = useMemo(() => extractYoutubeId(searchQuery) !== null, [searchQuery]);
+
+  const handlePlayUrl = useCallback(() => {
+    const id = extractYoutubeId(searchQuery);
+    if (id) {
+      const song: Song = { name: 'YouTube Video', artist: 'From URL', youtubeId: id, emoji: '🔗' };
+      setCurrentSong(song);
+    }
+  }, [searchQuery]);
+
   const filteredPlaylist = useMemo(() => {
-    if (!searchQuery.trim()) return playlist;
+    if (!searchQuery.trim() || isYoutubeUrl) return playlist;
     const q = searchQuery.toLowerCase();
     return playlist.filter(s => s.name.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
-  }, [searchQuery]);
+  }, [searchQuery, isYoutubeUrl]);
 
   const audioBars = useMemo(() =>
     Array.from({ length: 24 }, (_, i) => ({
