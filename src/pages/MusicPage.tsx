@@ -7,6 +7,13 @@ const MusicPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isAudioOnly, setIsAudioOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredPlaylist = useMemo(() => {
+    if (!searchQuery.trim()) return playlist;
+    const q = searchQuery.toLowerCase();
+    return playlist.filter(s => s.name.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
+  }, [searchQuery]);
 
   const audioBars = useMemo(() =>
     Array.from({ length: 24 }, (_, i) => ({
