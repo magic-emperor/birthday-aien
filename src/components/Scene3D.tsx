@@ -302,16 +302,18 @@ const GrassField: React.FC = () => {
     return { matrix, bladeData };
   }, []);
 
-  // Set initial matrices
-  useMemo(() => {
-    if (!meshRef.current) return;
+  const initDone = useRef(false);
+
+  useFrame(() => {
+    if (!meshRef.current || initDone.current) return;
     const m = new THREE.Matrix4();
     for (let i = 0; i < BLADE_COUNT; i++) {
       m.fromArray(matrix, i * 16);
       meshRef.current.setMatrixAt(i, m);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [matrix]);
+    initDone.current = true;
+  });
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
@@ -424,7 +426,7 @@ const FlowingRiver: React.FC = () => {
   const shimmerBaseRef = useRef<Float32Array | null>(null);
 
   const riverGeometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(1, 220, 128, 400);
+    const geo = new THREE.PlaneGeometry(1, 220, 64, 200);
     const pos = geo.attributes.position;
     const arr = pos.array as Float32Array;
     for (let i = 0; i < pos.count; i++) {
@@ -467,13 +469,12 @@ const FlowingRiver: React.FC = () => {
       for (let i = 0; i < pos.count; i++) {
         const x = base[i * 3];
         const z = base[i * 3 + 1];
-        const waveA = Math.sin(z * 0.14 + t * 1.4) * 0.35;
-        const waveB = Math.cos(x * 0.5 - t * 0.8) * 0.22;
-        const waveC = Math.sin((x + z) * 0.09 + t * 1.1) * 0.15;
-        const ripple = Math.sin(x * 2.0 + z * 1.5 + t * 2.8) * 0.06;
-        const flow = Math.sin((z + t * 5) * 0.045) * 0.1;
-        const swell = Math.sin(z * 0.04 + t * 0.6) * 0.18;
-        arr[i * 3 + 2] = waveA + waveB + waveC + ripple + flow + swell;
+        const waveA = Math.sin(z * 0.14 + t * 1.4) * 0.18;
+        const waveB = Math.cos(x * 0.5 - t * 0.8) * 0.1;
+        const waveC = Math.sin((x + z) * 0.09 + t * 1.1) * 0.07;
+        const ripple = Math.sin(x * 2.0 + z * 1.5 + t * 2.8) * 0.03;
+        const flow = Math.sin((z + t * 5) * 0.045) * 0.05;
+        arr[i * 3 + 2] = waveA + waveB + waveC + ripple + flow;
       }
       pos.needsUpdate = true;
       riverRef.current.geometry.computeVertexNormals();
