@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      memory_capsules: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message: string
+          title: string
+          unlock_date: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message: string
+          title: string
+          unlock_date: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message?: string
+          title?: string
+          unlock_date?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
