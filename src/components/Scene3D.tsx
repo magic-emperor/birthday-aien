@@ -1037,19 +1037,19 @@ const AtmosphericMist: React.FC = () => (
   </group>
 );
 
-// ===== FIREFLIES =====
-const Fireflies: React.FC = () => {
+// ===== FIREFLIES (night only) =====
+const Fireflies: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const COUNT = 40;
+  const COUNT = 60;
 
   const flies = useMemo(() =>
     Array.from({ length: COUNT }, (_, i) => ({
-      x: (hash(i * 3.1) - 0.5) * 60,
-      y: -1.5 + hash(i * 5.3) * 4,
+      x: (hash(i * 3.1) - 0.5) * 80,
+      y: -1 + hash(i * 5.3) * 6,
       z: -140 + hash(i * 7.7) * 180,
       speed: 0.3 + hash(i * 9.1) * 0.6,
       phase: hash(i * 11.3) * Math.PI * 2,
-      drift: 0.5 + hash(i * 13.7) * 1.5,
+      drift: 0.5 + hash(i * 13.7) * 2,
       pulseSpeed: 1.5 + hash(i * 15.1) * 2,
     })), []
   );
@@ -1061,11 +1061,11 @@ const Fireflies: React.FC = () => {
       const f = flies[i];
       if (!f) return;
       child.position.x = f.x + Math.sin(t * f.speed + f.phase) * f.drift;
-      child.position.y = f.y + Math.sin(t * f.speed * 1.3 + f.phase * 0.7) * 0.6;
+      child.position.y = f.y + Math.sin(t * f.speed * 1.3 + f.phase * 0.7) * 0.8;
       child.position.z = f.z + Math.cos(t * f.speed * 0.8 + f.phase * 1.2) * f.drift * 0.5;
-      const glow = 0.3 + Math.sin(t * f.pulseSpeed + f.phase) * 0.7;
+      const glow = 0.5 + Math.sin(t * f.pulseSpeed + f.phase) * 0.5;
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      mat.opacity = Math.max(0.1, glow);
+      mat.opacity = isNight ? Math.max(0.2, glow) : 0;
     });
   });
 
@@ -1073,8 +1073,8 @@ const Fireflies: React.FC = () => {
     <group ref={groupRef}>
       {flies.map((f, i) => (
         <mesh key={i} position={[f.x, f.y, f.z]}>
-          <sphereGeometry args={[0.06, 6, 6]} />
-          <meshBasicMaterial color={toColor(55, 100, 70)} transparent opacity={0.6} />
+          <sphereGeometry args={[0.12, 6, 6]} />
+          <meshBasicMaterial color={toColor(50, 100, 75)} transparent opacity={0} />
         </mesh>
       ))}
     </group>
