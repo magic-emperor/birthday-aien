@@ -93,19 +93,30 @@ const MusicPage: React.FC = () => {
           <div className="relative max-w-md mx-auto">
             <input
               type="text"
-              placeholder="🔍 Search songs or artists..."
+              placeholder="🔍 Search songs or paste YouTube link..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:bg-white/8 transition-all backdrop-blur-md"
+              onKeyDown={(e) => e.key === 'Enter' && isYoutubeUrl && handlePlayUrl()}
+              className="w-full px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:bg-white/8 transition-all backdrop-blur-md pr-20"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-xs"
-              >
-                ✕
-              </button>
-            )}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {isYoutubeUrl && (
+                <button
+                  onClick={handlePlayUrl}
+                  className="px-3 py-1 rounded-lg bg-gradient-to-r from-[hsl(310,45%,55%)] to-[hsl(330,60%,65%)] text-white text-xs font-body hover:opacity-90 transition-all"
+                >
+                  ▶ Play
+                </button>
+              )}
+              {searchQuery && !isYoutubeUrl && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-white/30 hover:text-white/60 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
