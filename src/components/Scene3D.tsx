@@ -8,235 +8,338 @@ interface SceneProps {
   isTransitioning: boolean;
 }
 
-/* ─── Sky ─── */
+type TreeData = {
+  position: [number, number, number];
+  scale: number;
+  seed: number;
+};
+
+const fract = (n: number) => n - Math.floor(n);
+const hash = (n: number) => fract(Math.sin(n * 127.1 + 311.7) * 43758.5453123);
+const noise3 = (x: number, y: number, z: number, seed: number) => {
+  const a = Math.sin(x * 1.7 + y * 2.3 + z * 1.1 + seed * 13.1);
+  const b = Math.sin(x * 3.1 - y * 1.4 + z * 2.7 + seed * 7.3);
+  const c = Math.sin(x * 6.3 + y * 4.2 - z * 3.5 + seed * 3.9);
+  return (a + b * 0.5 + c * 0.25) / 1.75;
+};
+
 const SkyDome: React.FC = () => {
-  const skyMat = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      side: THREE.BackSide,
-      uniforms: {
-        topColor: { value: new THREE.Color('hsl(210, 82%, 72%)') },
-        bottomColor: { value: new THREE.Color('hsl(32, 60%, 90%)') },
-        offset: { value: 20 },
-        exponent: { value: 0.4 },
-      },
-      vertexShader: `
-        varying vec3 vWorldPosition;
-        void main() {
-          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-          vWorldPosition = worldPosition.xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 topColor;
-        uniform vec3 bottomColor;
-        uniform float offset;
-        uniform float exponent;
-        varying vec3 vWorldPosition;
-        void main() {
-          float h = normalize(vWorldPosition + offset).y;
-          gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
-        }
-      `,
-    });
-  }, []);
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        uniforms: {
+          topColor: { value: new THREE.Color('hsl(207 72% 69%)') },
+          middleColor: { value: new THREE.Color('hsl(205 62% 79%)') },
+          bottomColor: { value: new THREE.Color('hsl(36 55% 88%)') },
+        },
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 topColor;
+          uniform vec3 middleColor;
+          uniform vec3 bottomColor;
+          varying vec3 vWorldPosition;
+
+          void main() {
+            float h = normalize(vWorldPosition).y;
+            float t1 = smoothstep(-0.25, 0.35, h);
+            float t2 = smoothstep(0.05, 0.75, h);
+            vec3 col = mix(bottomColor, middleColor, t1);
+            col = mix(col, topColor, t2);
+            gl_FragColor = vec4(col, 1.0);
+          }
+        `,
+      }),
+    []
+  );
 
   return (
-    <mesh material={skyMat}>
-      <sphereGeometry args={[140, 32, 20]} />
+    <mesh>
+      <sphereGeometry args={[165, 42, 24]} />
+      <primitive object={material} attach="material" />
     </mesh>
   );
 };
 
-/* ─── Sun with glow ─── */
-const Sun: React.FC = () => (
-  <group position={[15, 28, -110]}>
-    <mesh>
-      <circleGeometry args={[5, 32]} />
-      <meshBasicMaterial color="#FFF5E0" />
-    </mesh>
-    <mesh>
-      <circleGeometry args={[12, 32]} />
-      <meshBasicMaterial color="#FFF5E0" transparent opacity={0.12} />
-    </mesh>
-    <mesh>
-      <circleGeometry args={[20, 32]} />
-      <meshBasicMaterial color="#FFEEDD" transparent opacity={0.05} />
-    </mesh>
-  </group>
-);
+const SunAndGlow: React.FC = () => {
+  return (
+    <group position={[18, 23, -128]}>
+      <mesh>
+        <circleGeometry args={[4.6, 40]} />
+        <meshBasicMaterial color="hsl(45 92% 88%)" transparent opacity={0.95} />
+      </mesh>
+      <mesh>
+        <circleGeometry args={[9.2, 40]} />
+        <meshBasicMaterial color="hsl(40 90% 82%)" transparent opacity={0.2} />
+      </mesh>
+      <mesh>
+        <circleGeometry args={[15.8, 40]} />
+        <meshBasicMaterial color="hsl(34 88% 80%)" transparent opacity={0.08} />
+      </mesh>
+    </group>
+  );
+};
 
-/* ─── Natural Mountains with vertex displacement ─── */
+const CloudField: React.FC = () => {
+  const clouds = useMemo(
+    () =>
+      Array.from({ length: 16 }, (_, i) => {
+        const seed = i + 1;
+        const x = -48 + hash(seed * 3) * 96;
+        const y = 16 + hash(seed * 7) * 10;
+        const z = -140 + hash(seed * 11) * 95;
+        const scale = 2.4 + hash(seed * 13) * 3.2;
+        const drift = 0.03 + hash(seed * 17) * 0.05;
+
+        const puffs = Array.from({ length: 7 }, (_, p) => {
+          const px = (hash(seed * (p + 1) * 19) - 0.5) * 5.2;
+          const py = (hash(seed * (p + 1) * 23) - 0.5) * 1.4;
+          const pz = (hash(seed * (p + 1) * 29) - 0.5) * 2.8;
+          const ps = 0.8 + hash(seed * (p + 1) * 31) * 1.1;
+          const lightness = 80 + hash(seed * (p + 1) * 37) * 10;
+          const hue = 205 + hash(seed * (p + 1) * 41) * 12;
+          return {
+            position: [px, py, pz] as [number, number, number],
+            scale: ps,
+            color: `hsl(${hue} 24% ${lightness}%)`,
+          };
+        });
+
+        return {
+          base: [x, y, z] as [number, number, number],
+          scale,
+          drift,
+          seed,
+          puffs,
+        };
+      }),
+    []
+  );
+
+  const cloudGroupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!cloudGroupRef.current) return;
+    const t = clock.elapsedTime;
+
+    cloudGroupRef.current.children.forEach((child, i) => {
+      const cloud = clouds[i];
+      if (!cloud || !(child instanceof THREE.Group)) return;
+
+      child.position.x = cloud.base[0] + Math.sin(t * cloud.drift + cloud.seed * 2.1) * 2.8;
+      child.position.y = cloud.base[1] + Math.cos(t * cloud.drift * 0.7 + cloud.seed) * 0.5;
+      child.position.z = cloud.base[2] + Math.sin(t * cloud.drift * 0.5 + cloud.seed * 1.8) * 1.4;
+    });
+  });
+
+  return (
+    <group ref={cloudGroupRef}>
+      {clouds.map((cloud, index) => (
+        <group key={index} position={cloud.base} scale={[cloud.scale, cloud.scale * 0.55, cloud.scale * 0.8]}>
+          {cloud.puffs.map((puff, puffIndex) => (
+            <mesh key={puffIndex} position={puff.position} scale={[puff.scale, puff.scale, puff.scale * 1.2]}>
+              <sphereGeometry args={[0.92, 12, 10]} />
+              <meshStandardMaterial
+                color={puff.color}
+                transparent
+                opacity={0.42}
+                roughness={1}
+                metalness={0}
+              />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+};
+
 const NaturalMountain: React.FC<{
   position: [number, number, number];
-  width: number;
-  height: number;
-  depth: number;
+  scale: [number, number, number];
   color: string;
   snowColor?: string;
-  snowLine?: number;
   seed: number;
-}> = ({ position, width, height, depth, color, snowColor, snowLine = 0.7, seed }) => {
-  const geoRef = useRef<THREE.BufferGeometry>(null);
-
-  useMemo(() => {
-    // We'll displace after mount
-  }, []);
-
-  const displaceGeo = (geo: THREE.BufferGeometry) => {
+}> = ({ position, scale, color, snowColor, seed }) => {
+  const geometry = useMemo(() => {
+    const geo = new THREE.IcosahedronGeometry(1, 4);
     const pos = geo.attributes.position;
-    const arr = pos.array as Float32Array;
+    const v = new THREE.Vector3();
+
     for (let i = 0; i < pos.count; i++) {
-      const x = arr[i * 3];
-      const y = arr[i * 3 + 1];
-      const z = arr[i * 3 + 2];
-      // Add organic noise based on position
-      const noise =
-        Math.sin(x * 1.3 + seed * 10) * 0.8 +
-        Math.sin(z * 1.7 + seed * 7) * 0.6 +
-        Math.sin((x + z) * 2.1 + seed * 3) * 0.4;
-      // Stronger displacement at mid-height, less at peak and base
-      const heightFactor = Math.sin((y / height) * Math.PI) * 0.7;
-      arr[i * 3] += noise * heightFactor * 1.2;
-      arr[i * 3 + 2] += noise * heightFactor * 0.8;
+      v.fromBufferAttribute(pos, i);
+
+      const n = noise3(v.x, v.y, v.z, seed);
+      const ridge = Math.abs(Math.sin(v.x * 6.8 + seed * 2.7)) * 0.09;
+      const verticalBias = Math.max(0, v.y) * 0.11;
+      const radial = 1 + n * 0.24 + ridge + verticalBias;
+
+      v.multiplyScalar(radial);
+      v.y = Math.max(v.y, -0.58);
+      v.x += Math.sin(v.y * 7.2 + seed * 5.1) * 0.025;
+      v.z += Math.cos(v.x * 6.3 + seed * 4.4) * 0.03;
+
+      pos.setXYZ(i, v.x, v.y, v.z);
     }
+
     pos.needsUpdate = true;
     geo.computeVertexNormals();
-  };
+    return geo;
+  }, [seed]);
 
   return (
     <group position={position}>
-      {/* Main mountain body */}
-      <mesh
-        onUpdate={(mesh) => {
-          if (mesh.geometry) displaceGeo(mesh.geometry);
-        }}
-      >
-        <coneGeometry args={[width, height, 12, 6]} />
-        <meshStandardMaterial
-          color={color}
-          roughness={0.92}
-          flatShading
-        />
+      <mesh geometry={geometry} scale={scale}>
+        <meshStandardMaterial color={color} roughness={0.94} flatShading />
       </mesh>
-      {/* Snow cap */}
+
       {snowColor && (
-        <mesh position={[0, height * 0.32, 0]}>
-          <coneGeometry args={[width * 0.35, height * 0.38, 10, 3]} />
-          <meshStandardMaterial
-            color={snowColor}
-            roughness={0.3}
-            flatShading
-          />
+        <mesh
+          geometry={geometry}
+          scale={[scale[0] * 0.37, scale[1] * 0.27, scale[2] * 0.37]}
+          position={[0, scale[1] * 0.58, 0]}
+        >
+          <meshStandardMaterial color={snowColor} roughness={0.35} flatShading />
         </mesh>
       )}
     </group>
   );
 };
 
-const MountainRange: React.FC = () => (
-  <group position={[0, -3, -100]}>
-    {/* Back layer - distant, misty */}
-    <NaturalMountain position={[0, 14, -20]} width={28} height={30} depth={20} color="hsl(220, 25%, 52%)" snowColor="hsl(210, 30%, 92%)" seed={1} />
-    <NaturalMountain position={[-35, 10, -15]} width={22} height={22} depth={18} color="hsl(225, 22%, 48%)" snowColor="hsl(215, 25%, 88%)" seed={2} />
-    <NaturalMountain position={[30, 9, -12]} width={20} height={20} depth={16} color="hsl(218, 20%, 50%)" snowColor="hsl(210, 28%, 90%)" seed={3} />
+const MountainRange: React.FC = () => {
+  return (
+    <group position={[0, -4.2, -110]}>
+      <NaturalMountain position={[0, 14, -12]} scale={[28, 24, 18]} color="hsl(214 21% 45%)" snowColor="hsl(210 28% 91%)" seed={1.1} />
+      <NaturalMountain position={[-26, 11, -5]} scale={[20, 18, 14]} color="hsl(212 19% 40%)" snowColor="hsl(205 24% 86%)" seed={2.2} />
+      <NaturalMountain position={[28, 10, -4]} scale={[19, 16.5, 13]} color="hsl(210 18% 41%)" snowColor="hsl(204 24% 87%)" seed={3.3} />
 
-    {/* Mid layer */}
-    <NaturalMountain position={[-18, 8, 5]} width={16} height={18} depth={14} color="hsl(200, 18%, 38%)" seed={4} />
-    <NaturalMountain position={[20, 7, 8]} width={14} height={16} depth={12} color="hsl(195, 16%, 36%)" seed={5} />
-    <NaturalMountain position={[-40, 6, 10]} width={12} height={13} depth={10} color="hsl(210, 15%, 40%)" seed={6} />
-    <NaturalMountain position={[42, 5.5, 12]} width={11} height={12} depth={10} color="hsl(205, 14%, 42%)" seed={7} />
+      <NaturalMountain position={[-12, 7, 13]} scale={[14, 11, 9]} color="hsl(188 15% 34%)" seed={4.4} />
+      <NaturalMountain position={[15, 6.6, 15]} scale={[13, 10, 8.5]} color="hsl(184 14% 33%)" seed={5.5} />
+      <NaturalMountain position={[-36, 5.5, 15]} scale={[11, 8.5, 7]} color="hsl(190 14% 36%)" seed={6.6} />
+      <NaturalMountain position={[37, 5.2, 16]} scale={[10.5, 8.2, 6.8]} color="hsl(190 14% 37%)" seed={7.7} />
 
-    {/* Front hills - greener */}
-    <NaturalMountain position={[-12, 3.5, 25]} width={10} height={8} depth={8} color="hsl(140, 25%, 35%)" seed={8} />
-    <NaturalMountain position={[14, 3, 28]} width={9} height={7} depth={7} color="hsl(145, 22%, 37%)" seed={9} />
-  </group>
-);
+      <NaturalMountain position={[-9, 3.7, 28]} scale={[8.8, 6.2, 5.5]} color="hsl(139 24% 33%)" seed={8.8} />
+      <NaturalMountain position={[11, 3.5, 29]} scale={[8.5, 6, 5.2]} color="hsl(142 24% 34%)" seed={9.9} />
+    </group>
+  );
+};
 
-/* ─── Ground / Land ─── */
-const Ground: React.FC = () => {
-  const groundRef = useRef<THREE.Mesh>(null);
-
-  useMemo(() => {}, []);
-
+const RiverBanks: React.FC = () => {
   return (
     <group>
-      {/* Left bank */}
-      <mesh position={[-12, -3.1, -20]} rotation={[-Math.PI / 2, 0.06, 0]}>
-        <planeGeometry args={[24, 160, 20, 40]} />
-        <meshStandardMaterial color="hsl(128, 35%, 32%)" roughness={0.95} flatShading />
+      <mesh position={[-9, -3.2, -44]} rotation={[-Math.PI / 2, 0.08, 0.02]}>
+        <planeGeometry args={[17, 180, 20, 40]} />
+        <meshStandardMaterial color="hsl(125 34% 33%)" roughness={0.97} />
       </mesh>
-      {/* Right bank */}
-      <mesh position={[12, -3.1, -20]} rotation={[-Math.PI / 2, -0.06, 0]}>
-        <planeGeometry args={[24, 160, 20, 40]} />
-        <meshStandardMaterial color="hsl(130, 33%, 34%)" roughness={0.95} flatShading />
+
+      <mesh position={[9, -3.2, -44]} rotation={[-Math.PI / 2, -0.08, -0.02]}>
+        <planeGeometry args={[17, 180, 20, 40]} />
+        <meshStandardMaterial color="hsl(127 34% 34%)" roughness={0.97} />
       </mesh>
-      {/* Near ground under camera */}
-      <mesh position={[0, -3.2, 10]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[60, 30]} />
-        <meshStandardMaterial color="hsl(125, 30%, 30%)" roughness={1} />
+
+      <mesh position={[0, -3.35, 13]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[64, 28]} />
+        <meshStandardMaterial color="hsl(123 28% 31%)" roughness={0.98} />
       </mesh>
     </group>
   );
 };
 
-/* ─── Water ─── */
 const FlowingWater: React.FC = () => {
   const waterRef = useRef<THREE.Mesh>(null);
+  const streakGroupRef = useRef<THREE.Group>(null);
   const basePositionsRef = useRef<Float32Array | null>(null);
 
+  const streaks = useMemo(
+    () =>
+      Array.from({ length: 80 }, (_, i) => ({
+        x: -4.6 + hash(i * 3.7) * 9.2,
+        zOffset: -95 + hash(i * 8.1) * 190,
+        speed: 2.4 + hash(i * 5.9) * 2.1,
+        length: 0.4 + hash(i * 2.2) * 0.9,
+        width: 0.03 + hash(i * 9.4) * 0.06,
+        alpha: 0.05 + hash(i * 4.3) * 0.11,
+      })),
+    []
+  );
+
   useFrame(({ clock }) => {
-    if (!waterRef.current) return;
-    const geo = waterRef.current.geometry;
-    const position = geo.attributes.position;
-    const arr = position.array as Float32Array;
-
-    if (!basePositionsRef.current) {
-      basePositionsRef.current = new Float32Array(arr);
-    }
-
-    const base = basePositionsRef.current;
     const t = clock.elapsedTime;
 
-    for (let i = 0; i < position.count; i++) {
-      const x = base[i * 3];
-      const z = base[i * 3 + 2];
-      arr[i * 3 + 1] =
-        Math.sin((z * 0.15) + t * 1.2) * 0.12 +
-        Math.cos((x * 0.3) + t * 0.8) * 0.08 +
-        Math.sin((x * 0.1 + z * 0.1) + t * 0.5) * 0.06;
+    if (waterRef.current) {
+      const geo = waterRef.current.geometry;
+      const position = geo.attributes.position;
+      const arr = position.array as Float32Array;
+
+      if (!basePositionsRef.current) {
+        basePositionsRef.current = new Float32Array(arr);
+      }
+
+      const base = basePositionsRef.current;
+
+      for (let i = 0; i < position.count; i++) {
+        const x = base[i * 3];
+        const z = base[i * 3 + 2];
+        const wave1 = Math.sin(z * 0.18 + t * 1.8) * 0.11;
+        const wave2 = Math.cos(x * 0.6 - t * 0.95) * 0.07;
+        const wave3 = Math.sin((x + z) * 0.14 + t * 1.3) * 0.05;
+        const flowBias = Math.sin((z + t * 8) * 0.05) * 0.03;
+        arr[i * 3 + 1] = wave1 + wave2 + wave3 + flowBias;
+      }
+
+      position.needsUpdate = true;
+      geo.computeVertexNormals();
     }
 
-    position.needsUpdate = true;
-    geo.computeVertexNormals();
+    if (streakGroupRef.current) {
+      streakGroupRef.current.children.forEach((child, i) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const s = streaks[i];
+        if (!s) return;
+
+        const range = 190;
+        const z = ((t * s.speed + s.zOffset + range / 2) % range) - range / 2;
+
+        child.position.set(s.x + Math.sin(t * 0.4 + i) * 0.08, 0.03, z);
+
+        const material = child.material as THREE.MeshStandardMaterial;
+        material.opacity = s.alpha + Math.sin(t * 2.2 + i) * 0.02;
+      });
+    }
   });
 
   return (
-    <group position={[0, -3.0, -20]}>
-      {/* Deep water base */}
-      <mesh position={[0, -0.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[12, 160]} />
-        <meshStandardMaterial color="hsl(210, 50%, 22%)" roughness={1} />
+    <group position={[0, -3.05, -44]}>
+      <mesh position={[0, -0.36, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[10, 190]} />
+        <meshStandardMaterial color="hsl(208 47% 22%)" roughness={1} />
       </mesh>
-      {/* Surface water with ripples */}
+
       <mesh ref={waterRef} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[12, 160, 60, 200]} />
+        <planeGeometry args={[10, 190, 64, 240]} />
         <meshStandardMaterial
-          color="hsl(200, 55%, 45%)"
-          emissive="hsl(195, 60%, 30%)"
-          emissiveIntensity={0.1}
+          color="hsl(198 58% 45%)"
+          emissive="hsl(196 55% 29%)"
+          emissiveIntensity={0.15}
           transparent
-          opacity={0.55}
-          roughness={0.05}
-          metalness={0.6}
+          opacity={0.57}
+          roughness={0.06}
+          metalness={0.62}
           side={THREE.DoubleSide}
         />
       </mesh>
-      {/* Surface shimmer layer */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[12, 160]} />
+
+      <mesh position={[0, 0.018, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[10, 190]} />
         <meshStandardMaterial
-          color="hsl(200, 40%, 70%)"
+          color="hsl(196 48% 78%)"
           transparent
           opacity={0.08}
           roughness={0}
@@ -244,95 +347,89 @@ const FlowingWater: React.FC = () => {
           side={THREE.DoubleSide}
         />
       </mesh>
+
+      <group ref={streakGroupRef}>
+        {streaks.map((streak, i) => (
+          <mesh key={i} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[streak.width, streak.length]} />
+            <meshStandardMaterial
+              color="hsl(196 40% 88%)"
+              transparent
+              opacity={streak.alpha}
+              emissive="hsl(196 50% 70%)"
+              emissiveIntensity={0.12}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };
 
-/* ─── Natural Blossom Tree ─── */
-type TreeData = {
-  position: [number, number, number];
-  scale: number;
-  seed: number;
-};
-
 const BlossomTree: React.FC<{ data: TreeData }> = ({ data }) => {
-  const groupRef = useRef<THREE.Group>(null);
+  const treeRef = useRef<THREE.Group>(null);
 
-  // Generate organic canopy clusters
-  const canopy = useMemo(() => {
-    const clusters: { pos: [number, number, number]; radius: number; color: string }[] = [];
-    const rng = (n: number) => Math.sin(data.seed * 1000 + n * 137.5) * 0.5 + 0.5;
-
-    // Main canopy - multiple overlapping spheres
-    const numClusters = 5 + Math.floor(rng(0) * 4);
-    for (let i = 0; i < numClusters; i++) {
-      const angle = (i / numClusters) * Math.PI * 2 + rng(i + 10) * 0.8;
-      const r = 0.3 + rng(i + 20) * 0.5;
-      const h = 2.2 + rng(i + 30) * 0.8;
-      clusters.push({
-        pos: [Math.cos(angle) * r, h, Math.sin(angle) * r],
-        radius: 0.5 + rng(i + 40) * 0.4,
-        color: `hsl(${335 + rng(i + 50) * 20}, ${65 + rng(i + 60) * 20}%, ${75 + rng(i + 70) * 15}%)`,
-      });
-    }
-    // Top cluster
-    clusters.push({
-      pos: [rng(100) * 0.2 - 0.1, 2.9 + rng(101) * 0.3, rng(102) * 0.2 - 0.1],
-      radius: 0.4 + rng(103) * 0.25,
-      color: `hsl(${340 + rng(104) * 15}, 72%, 82%)`,
-    });
-    return clusters;
-  }, [data.seed]);
-
-  // Branch positions
   const branches = useMemo(() => {
-    const rng = (n: number) => Math.sin(data.seed * 999 + n * 73.1) * 0.5 + 0.5;
-    return Array.from({ length: 3 }, (_, i) => {
-      const angle = (i / 3) * Math.PI * 2 + rng(i) * 1.5;
-      const len = 0.8 + rng(i + 10) * 0.6;
+    return Array.from({ length: 5 }, (_, i) => {
+      const angle = (i / 5) * Math.PI * 2 + hash(data.seed * (i + 1) * 13) * 0.8;
+      const lift = 0.45 + hash(data.seed * (i + 1) * 17) * 0.42;
+      const len = 0.8 + hash(data.seed * (i + 1) * 19) * 0.7;
       return {
-        rotation: [0, angle, 0.5 + rng(i + 20) * 0.4] as [number, number, number],
-        position: [0, 1.5 + rng(i + 30) * 0.5, 0] as [number, number, number],
+        rotation: [lift, angle, hash(data.seed * (i + 1) * 29) * 0.6 - 0.3] as [number, number, number],
         length: len,
+        thickness: 0.028 + hash(data.seed * (i + 1) * 23) * 0.028,
       };
     });
   }, [data.seed]);
 
+  const blossomClusters = useMemo(() => {
+    return Array.from({ length: 14 }, (_, i) => {
+      const ring = i < 8 ? 0.9 : 1.35;
+      const angle = (i / 14) * Math.PI * 2 + hash(data.seed * (i + 2) * 31) * 0.8;
+      const x = Math.cos(angle) * ring * (0.8 + hash(data.seed * (i + 3) * 37) * 0.5);
+      const y = 2 + hash(data.seed * (i + 4) * 41) * 1.25;
+      const z = Math.sin(angle) * ring * (0.8 + hash(data.seed * (i + 5) * 43) * 0.5);
+      const radius = 0.34 + hash(data.seed * (i + 6) * 47) * 0.26;
+      const hue = 334 + hash(data.seed * (i + 7) * 53) * 18;
+      const sat = 66 + hash(data.seed * (i + 8) * 59) * 18;
+      const light = 75 + hash(data.seed * (i + 9) * 61) * 15;
+      return { position: [x, y, z] as [number, number, number], radius, color: `hsl(${hue} ${sat}% ${light}%)` };
+    });
+  }, [data.seed]);
+
   useFrame(({ clock }) => {
-    if (!groupRef.current) return;
-    const sway = Math.sin(clock.elapsedTime * 0.5 + data.seed * 10) * 0.025;
-    groupRef.current.rotation.z = sway;
-    groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.3 + data.seed * 5) * 0.01;
+    if (!treeRef.current) return;
+    const sway = Math.sin(clock.elapsedTime * 0.5 + data.seed * 7.5) * 0.024;
+    treeRef.current.rotation.z = sway;
+    treeRef.current.rotation.x = Math.cos(clock.elapsedTime * 0.22 + data.seed * 5) * 0.008;
   });
 
   return (
-    <group ref={groupRef} position={data.position} scale={[data.scale, data.scale, data.scale]}>
-      {/* Trunk - tapered cylinder */}
-      <mesh position={[0, 1, 0]}>
-        <cylinderGeometry args={[0.08, 0.18, 2.2, 8]} />
-        <meshStandardMaterial color="hsl(25, 40%, 22%)" roughness={0.95} />
+    <group ref={treeRef} position={data.position} scale={[data.scale, data.scale, data.scale]}>
+      <mesh position={[0, 1.02, 0]}>
+        <cylinderGeometry args={[0.08, 0.17, 2.28, 9]} />
+        <meshStandardMaterial color="hsl(24 39% 23%)" roughness={0.95} />
       </mesh>
 
-      {/* Branches */}
       {branches.map((branch, i) => (
-        <group key={i} position={branch.position} rotation={branch.rotation}>
-          <mesh position={[0, branch.length * 0.4, 0]}>
-            <cylinderGeometry args={[0.02, 0.05, branch.length, 6]} />
-            <meshStandardMaterial color="hsl(22, 35%, 25%)" roughness={0.9} />
+        <group key={i} position={[0, 1.5 + i * 0.12, 0]} rotation={branch.rotation}>
+          <mesh position={[0, branch.length * 0.45, 0]}>
+            <cylinderGeometry args={[branch.thickness * 0.6, branch.thickness, branch.length, 6]} />
+            <meshStandardMaterial color="hsl(23 35% 25%)" roughness={0.92} />
           </mesh>
         </group>
       ))}
 
-      {/* Canopy clusters - overlapping spheres for organic look */}
-      {canopy.map((cluster, i) => (
-        <mesh key={i} position={cluster.pos}>
+      {blossomClusters.map((cluster, i) => (
+        <mesh key={i} position={cluster.position}>
           <icosahedronGeometry args={[cluster.radius, 1]} />
           <meshStandardMaterial
             color={cluster.color}
-            roughness={0.7}
+            roughness={0.72}
             flatShading
             transparent
-            opacity={0.92}
+            opacity={0.93}
           />
         </mesh>
       ))}
@@ -343,97 +440,99 @@ const BlossomTree: React.FC<{ data: TreeData }> = ({ data }) => {
 const TreeRows: React.FC = () => {
   const trees = useMemo<TreeData[]>(() => {
     const items: TreeData[] = [];
-    // Use seeded pseudo-random for consistency
-    const rng = (n: number) => ((Math.sin(n * 127.1 + 311.7) * 43758.5453) % 1 + 1) % 1;
 
-    for (let i = 0; i < 22; i++) {
-      const z = 12 - i * 5.5;
-      const leftOffset = 5.5 + rng(i * 2) * 3;
-      const rightOffset = 5.5 + rng(i * 2 + 1) * 3;
+    for (let i = 0; i < 24; i++) {
+      const z = 10 - i * 6;
+      const leftX = -(6 + hash(i * 13 + 1) * 2.7);
+      const rightX = 6 + hash(i * 13 + 2) * 2.7;
 
       items.push({
-        position: [-leftOffset, -3.1, z + (rng(i * 3) - 0.5) * 2],
-        scale: 0.9 + rng(i * 4) * 0.5,
-        seed: rng(i * 5),
+        position: [leftX, -3.2, z + (hash(i * 17 + 3) - 0.5) * 1.8],
+        scale: 0.92 + hash(i * 19 + 4) * 0.48,
+        seed: hash(i * 23 + 5),
       });
+
       items.push({
-        position: [rightOffset, -3.1, z + (rng(i * 3 + 100) - 0.5) * 2],
-        scale: 0.9 + rng(i * 4 + 100) * 0.5,
-        seed: rng(i * 5 + 100),
+        position: [rightX, -3.2, z + (hash(i * 17 + 33) - 0.5) * 1.8],
+        scale: 0.92 + hash(i * 19 + 34) * 0.48,
+        seed: hash(i * 23 + 35),
       });
     }
+
     return items;
   }, []);
 
   return (
     <group>
-      {trees.map((tree, idx) => (
-        <BlossomTree key={idx} data={tree} />
+      {trees.map((tree, index) => (
+        <BlossomTree key={index} data={tree} />
       ))}
     </group>
   );
 };
 
-/* ─── Wind Petals ─── */
 const WindPetals: React.FC<{ isTransitioning: boolean }> = ({ isTransitioning }) => {
-  const groupRef = useRef<THREE.Group>(null);
+  const petalGroupRef = useRef<THREE.Group>(null);
   const gustRef = useRef(0);
-  const prevTransRef = useRef(false);
+  const prevTransitionRef = useRef(false);
 
   const petals = useMemo(
     () =>
-      Array.from({ length: 120 }, (_, i) => ({
-        depth: -100 + ((i * 137.5) % 130),
-        yOffset: (i * 0.618) % 6,
-        offset: (i * 2.3) % 30,
-        speed: 0.5 + ((i * 0.37) % 1.2),
-        sway: 0.5 + ((i * 0.73) % 1.5),
-        size: 0.04 + ((i * 0.13) % 0.06),
+      Array.from({ length: 160 }, (_, i) => ({
+        depth: -118 + hash(i * 1.7) * 150,
+        yOffset: -1 + hash(i * 3.2) * 10,
+        offset: hash(i * 4.9) * 36,
+        speed: 0.55 + hash(i * 6.1) * 1.45,
+        sway: 0.65 + hash(i * 7.3) * 2,
+        size: 0.038 + hash(i * 8.7) * 0.075,
       })),
     []
   );
 
   useFrame(({ clock }) => {
-    if (!groupRef.current) return;
+    if (!petalGroupRef.current) return;
 
-    if (isTransitioning && !prevTransRef.current) gustRef.current = 1;
-    prevTransRef.current = isTransitioning;
-    gustRef.current = Math.max(0, gustRef.current - 0.015);
+    if (isTransitioning && !prevTransitionRef.current) {
+      gustRef.current = 1;
+    }
 
-    const wind = 1 + gustRef.current * 3;
+    prevTransitionRef.current = isTransitioning;
+    gustRef.current = Math.max(0, gustRef.current - 0.017);
+
+    const wind = 1 + gustRef.current * 2.9;
     const t = clock.elapsedTime;
 
-    groupRef.current.children.forEach((child, index) => {
+    petalGroupRef.current.children.forEach((child, index) => {
       if (!(child instanceof THREE.Mesh)) return;
-      const p = petals[index];
-      if (!p) return;
+      const petal = petals[index];
+      if (!petal) return;
 
-      const cycle = (t * p.speed * wind + p.offset) % 30;
-      const x = -14 + ((cycle * 1.1) % 28);
-      const y = 6 - cycle * 0.35 + Math.sin(cycle * p.sway) * 0.7 + p.yOffset;
-      const z = p.depth + Math.sin(cycle * 0.4 + p.offset) * 1.5;
+      const cycle = (t * petal.speed * wind + petal.offset) % 34;
+      const x = -14 + ((cycle * 1.15 + Math.sin(cycle * 0.3)) % 28);
+      const y = 6.4 - cycle * 0.33 + Math.sin(cycle * petal.sway) * 0.6 + petal.yOffset;
+      const z = petal.depth + Math.sin(cycle * 0.45 + petal.offset) * 1.2;
 
       child.position.set(x, y, z);
-      child.rotation.x = cycle * 0.9;
-      child.rotation.y = Math.sin(cycle * 1.6) * 1.4;
+      child.rotation.x = cycle * 0.82;
+      child.rotation.y = Math.sin(cycle * 1.9) * 1.35;
       child.rotation.z = cycle * 0.7;
 
       const mat = child.material as THREE.MeshStandardMaterial;
-      mat.opacity = y > 5 || y < -3 ? 0.1 : 0.75;
+      mat.opacity = y > 5.5 || y < -4 ? 0.12 : 0.78;
     });
   });
 
   return (
-    <group ref={groupRef}>
-      {petals.map((p, i) => (
-        <mesh key={i}>
-          <planeGeometry args={[p.size, p.size * 1.6]} />
+    <group ref={petalGroupRef}>
+      {petals.map((petal, index) => (
+        <mesh key={index} position={[0, 0, petal.depth]}>
+          <planeGeometry args={[petal.size, petal.size * 1.65]} />
           <meshStandardMaterial
-            color={i % 3 === 0 ? 'hsl(340, 80%, 80%)' : i % 3 === 1 ? 'hsl(350, 70%, 85%)' : 'hsl(330, 75%, 75%)'}
-            emissive="hsl(335, 60%, 60%)"
-            emissiveIntensity={0.15}
+            color={index % 3 === 0 ? 'hsl(337 80% 78%)' : index % 3 === 1 ? 'hsl(346 70% 84%)' : 'hsl(330 76% 74%)'}
+            emissive="hsl(336 56% 64%)"
+            emissiveIntensity={0.2}
             transparent
-            opacity={0.75}
+            opacity={0.78}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -442,82 +541,87 @@ const WindPetals: React.FC<{ isTransitioning: boolean }> = ({ isTransitioning })
   );
 };
 
-/* ─── Mist layers for depth ─── */
-const MistLayers: React.FC = () => (
-  <group>
-    <mesh position={[0, 0, -60]} rotation={[0, 0, 0]}>
-      <planeGeometry args={[80, 12]} />
-      <meshBasicMaterial color="hsl(210, 60%, 85%)" transparent opacity={0.15} side={THREE.DoubleSide} />
-    </mesh>
-    <mesh position={[0, -1, -40]} rotation={[0, 0, 0]}>
-      <planeGeometry args={[60, 8]} />
-      <meshBasicMaterial color="hsl(200, 50%, 80%)" transparent opacity={0.1} side={THREE.DoubleSide} />
-    </mesh>
-  </group>
-);
+const AtmosphericMist: React.FC = () => {
+  return (
+    <group>
+      <mesh position={[0, -0.5, -74]}>
+        <planeGeometry args={[95, 17]} />
+        <meshBasicMaterial color="hsl(207 43% 82%)" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, -1.2, -52]}>
+        <planeGeometry args={[74, 12]} />
+        <meshBasicMaterial color="hsl(200 35% 79%)" transparent opacity={0.11} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+};
 
-/* ─── Camera ─── */
 const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const target = useRef(new THREE.Vector3(0, 0, 0));
-  const look = useRef(new THREE.Vector3(0, -1, -10));
+  const look = useRef(new THREE.Vector3(0, -1, -20));
   const burstRef = useRef(0);
-  const prevRef = useRef(false);
+  const prevTransitionRef = useRef(false);
 
   useFrame(({ camera, clock }) => {
     const t = clock.elapsedTime;
     const progress = totalSections > 1 ? currentSection / (totalSections - 1) : 0;
 
-    if (isTransitioning && !prevRef.current) burstRef.current = 1;
-    prevRef.current = isTransitioning;
-    burstRef.current = Math.max(0, burstRef.current - 0.025);
+    if (isTransitioning && !prevTransitionRef.current) {
+      burstRef.current = 1;
+    }
 
-    const travelZ = 12 - progress * 40 - burstRef.current * 1.5;
-    const driftX = Math.sin(t * 0.15) * 0.6;
-    const driftY = 0.8 + Math.sin(t * 0.1) * 0.15 - progress * 0.3;
+    prevTransitionRef.current = isTransitioning;
+    burstRef.current = Math.max(0, burstRef.current - 0.028);
+
+    const travelZ = 12 - progress * 58 - burstRef.current * 1.35;
+    const driftX = Math.sin(t * 0.16) * 0.58 + Math.sin(progress * Math.PI * 2) * 0.28;
+    const driftY = 0.95 + Math.sin(t * 0.1) * 0.16 - progress * 0.23;
 
     target.current.set(driftX, driftY, travelZ);
-    camera.position.lerp(target.current, isTransitioning ? 0.035 : 0.01);
+    camera.position.lerp(target.current, isTransitioning ? 0.038 : 0.012);
 
-    look.current.set(driftX * 0.15, -1, travelZ - 25);
+    look.current.set(driftX * 0.18, -1.05, travelZ - 28);
     camera.lookAt(look.current);
   });
 
   return null;
 };
 
-/* ─── Main Scene ─── */
-const SceneContent: React.FC<SceneProps> = (props) => (
-  <>
-    <fog attach="fog" args={['hsl(210, 60%, 82%)', 20, 130]} />
+const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
+  return (
+    <>
+      <fog attach="fog" args={['hsl(207 48% 79%)', 20, 170]} />
 
-    <ambientLight intensity={0.5} color="hsl(45, 100%, 95%)" />
-    <directionalLight position={[10, 15, -5]} intensity={0.9} color="hsl(40, 95%, 92%)" castShadow />
-    <directionalLight position={[-5, 8, 10]} intensity={0.3} color="hsl(210, 80%, 85%)" />
-    <hemisphereLight color="hsl(210, 80%, 85%)" groundColor="hsl(125, 30%, 35%)" intensity={0.4} />
+      <ambientLight intensity={0.48} color="hsl(42 100% 95%)" />
+      <directionalLight position={[14, 16, 2]} intensity={0.88} color="hsl(40 92% 90%)" />
+      <directionalLight position={[-8, 8, 12]} intensity={0.28} color="hsl(208 66% 83%)" />
+      <hemisphereLight color="hsl(206 70% 84%)" groundColor="hsl(126 30% 35%)" intensity={0.45} />
 
-    <SkyDome />
-    <Sun />
-    <MountainRange />
-    <Ground />
-    <FlowingWater />
-    <TreeRows />
-    <MistLayers />
-    <WindPetals isTransitioning={props.isTransitioning} />
-    <ReactiveCamera {...props} />
-  </>
-);
+      <SkyDome />
+      <SunAndGlow />
+      <CloudField />
+      <MountainRange />
+      <RiverBanks />
+      <FlowingWater />
+      <TreeRows />
+      <AtmosphericMist />
+      <WindPetals isTransitioning={isTransitioning} />
 
-const Scene3D: React.FC<SceneProps> = (props) => (
-  <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
-    <Canvas
-      camera={{ position: [0, 1, 12], fov: 55, near: 0.1, far: 200 }}
-      gl={{ antialias: true, alpha: false }}
-    >
-      <React.Suspense fallback={null}>
-        <SceneContent {...props} />
-      </React.Suspense>
-    </Canvas>
-  </div>
-);
+      <ReactiveCamera currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
+    </>
+  );
+};
+
+const Scene3D: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
+  return (
+    <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
+      <Canvas camera={{ position: [0, 1, 12], fov: 54, near: 0.1, far: 220 }} gl={{ antialias: true, alpha: false }}>
+        <React.Suspense fallback={null}>
+          <SceneContent currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
+        </React.Suspense>
+      </Canvas>
+    </div>
+  );
+};
 
 export default Scene3D;
