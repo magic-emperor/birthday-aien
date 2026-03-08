@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ChatMessage {
   sender: string;
@@ -175,16 +176,17 @@ const ChatViewerPage: React.FC = () => {
                   placeholder="Search messages, dates..."
                   className="flex-1 min-w-[200px] px-4 py-2.5 rounded-lg bg-white/10 border border-white/10 text-white placeholder-white/30 font-body text-sm focus:outline-none focus:border-white/30"
                 />
-                <select
-                  value={senderFilter}
-                  onChange={e => setSenderFilter(e.target.value)}
-                  className="px-3 py-2.5 rounded-lg bg-white/10 border border-white/10 text-white/80 font-body text-sm focus:outline-none appearance-none cursor-pointer"
-                >
-                  <option value="all">All senders</option>
-                  {senders.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                <Select value={senderFilter} onValueChange={setSenderFilter}>
+                  <SelectTrigger className="w-[180px] h-[42px] bg-white/10 border-white/10 text-white/80 font-body focus:ring-0 focus:ring-offset-0">
+                    <SelectValue placeholder="All senders" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/90 border-white/10 text-white/80 font-body backdrop-blur-xl">
+                    <SelectItem value="all" className="focus:bg-white/10 focus:text-white">All senders</SelectItem>
+                    {senders.map(s => (
+                      <SelectItem key={s} value={s} className="focus:bg-white/10 focus:text-white">{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {/* Upload more inline */}
               <label className="cursor-pointer block">
