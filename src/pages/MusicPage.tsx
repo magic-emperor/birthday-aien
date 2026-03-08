@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 const extractVideoId = (url: string): string | null => {
   const patterns = [
@@ -20,12 +21,6 @@ interface SearchResult {
   thumbnail: string;
   uploaderName: string;
 }
-
-const PIPED_INSTANCES = [
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.adminforge.de',
-  'https://pipedapi.in.projectsegfau.lt',
-];
 
 const MusicPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,35 +50,21 @@ const MusicPage: React.FC = () => {
     setError('');
     setSearchResults([]);
 
-    for (const instance of PIPED_INSTANCES) {
-      try {
-        const res = await fetch(
-          `${instance}/search?q=${encodeURIComponent(searchQuery)}&filter=videos`,
-          { signal: AbortSignal.timeout(6000) }
-        );
-        if (!res.ok) continue;
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          setSearchResults(
-            data.items
-              .filter((item: any) => item.url?.includes('/watch'))
-              .slice(0, 8)
-              .map((item: any) => ({
-                videoId: item.url?.replace('/watch?v=', '') || '',
-                title: item.title || 'Untitled',
-                thumbnail: item.thumbnail || '',
-                uploaderName: item.uploaderName || '',
-              }))
-          );
-          setIsSearching(false);
-          return;
-        }
-      } catch {
-        continue;
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('youtube-search', {
+        body: { query: searchQuery },
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      if (data?.results) {
+        setSearchResults(data.results);
       }
+    } catch (err: any) {
+      setError(err?.message || 'Search failed. Try pasting a YouTube link instead.');
+    } finally {
+      setIsSearching(false);
     }
-    setError('Search is temporarily unavailable. Try pasting a YouTube link instead.');
-    setIsSearching(false);
   }, [searchQuery]);
 
   // Animated bars for audio-only mode
