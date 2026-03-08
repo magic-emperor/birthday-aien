@@ -837,7 +837,7 @@ const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, i
 
 const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const cloudTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 0.96, midOpacity: 0.35, edgeOpacity: 0, shape: 'cloud' }), []);
-  const leafTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 1, midOpacity: 0.3, edgeOpacity: 0, shape: 'leaf' }), []);
+  // leafTexture no longer needed for trees
   const petalTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 1, midOpacity: 0.22, edgeOpacity: 0, shape: 'leaf' }), []);
 
   return (
