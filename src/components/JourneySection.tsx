@@ -40,44 +40,88 @@ const memories: Memory[] = [
   },
 ];
 
-const MemoryCard: React.FC<{ memory: Memory; index: number }> = ({ memory, index }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+const StepCard: React.FC<{ memory: Memory; index: number }> = ({ memory, index }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
   const isEven = index % 2 === 0;
 
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, x: isEven ? -80 : 80 }}
-      animate={isInView ? { opacity: 1, x: 0 } : {}}
-      transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className={`flex items-center gap-8 md:gap-16 ${isEven ? 'flex-row' : 'flex-row-reverse'} max-w-4xl mx-auto`}
-    >
-      {/* Emoji side */}
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={isInView ? { scale: 1 } : {}}
-        transition={{ delay: 0.3, type: 'spring', damping: 12 }}
-        className="flex-shrink-0 w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-card/60 backdrop-blur-sm border border-primary/10 flex items-center justify-center text-4xl md:text-5xl"
-      >
-        {memory.emoji}
-      </motion.div>
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'center center'],
+  });
 
-      {/* Text side */}
-      <div className={`flex-1 ${isEven ? 'text-left' : 'text-right'}`}>
-        <h3 className="text-xl md:text-2xl font-display text-primary mb-3">
-          {memory.title}
-        </h3>
-        <p className="text-sm md:text-base text-foreground/70 font-body leading-relaxed">
-          {memory.message}
-        </p>
-      </div>
-    </motion.div>
+  const translateZ = useTransform(scrollYProgress, [0, 1], [-150, 0]);
+  const rotateY = useTransform(scrollYProgress, [0, 1], [isEven ? -20 : 20, 0]);
+  const rotateX = useTransform(scrollYProgress, [0, 1], [10, 0]);
+  const stepOpacity = useTransform(scrollYProgress, [0, 0.4, 1], [0, 0.5, 1]);
+  const translateX = useTransform(scrollYProgress, [0, 1], [isEven ? -80 : 80, 0]);
+  const translateY = useTransform(scrollYProgress, [0, 1], [60, 0]);
+
+  return (
+    <div ref={ref} style={{ perspective: '1200px' }}>
+      <motion.div
+        style={{
+          opacity: stepOpacity,
+          rotateY,
+          rotateX,
+          translateZ,
+          translateX,
+          translateY,
+          transformOrigin: isEven ? 'right center' : 'left center',
+        }}
+        className="relative"
+      >
+        {/* Step connector line */}
+        <motion.div
+          initial={{ scaleY: 0 }}
+          animate={isInView ? { scaleY: 1 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="absolute left-1/2 -top-16 w-px h-16 bg-gradient-to-b from-transparent to-primary/30 origin-top hidden md:block"
+        />
+
+        {/* Step number indicator */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={isInView ? { scale: 1 } : {}}
+          transition={{ delay: 0.3, type: 'spring', damping: 12 }}
+          className="absolute left-1/2 -top-4 -translate-x-1/2 w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center z-20 hidden md:flex"
+        >
+          <span className="text-xs text-primary font-display">{index + 1}</span>
+        </motion.div>
+
+        <div className={`flex items-center gap-8 md:gap-16 ${isEven ? 'flex-row' : 'flex-row-reverse'} max-w-4xl mx-auto mt-8`}>
+          {/* Emoji side with 3D card effect */}
+          <motion.div
+            whileHover={{ rotateY: 15, scale: 1.1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            className="flex-shrink-0 w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-card/60 backdrop-blur-sm border border-primary/10 flex items-center justify-center text-4xl md:text-5xl"
+            style={{ transformStyle: 'preserve-3d' }}
+          >
+            {memory.emoji}
+          </motion.div>
+
+          {/* Text side */}
+          <motion.div
+            initial={{ opacity: 0, x: isEven ? -30 : 30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className={`flex-1 ${isEven ? 'text-left' : 'text-right'}`}
+          >
+            <h3 className="text-xl md:text-2xl font-display text-primary mb-3">
+              {memory.title}
+            </h3>
+            <p className="text-sm md:text-base text-foreground/70 font-body leading-relaxed">
+              {memory.message}
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
 const JourneySection: React.FC = () => {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
@@ -88,20 +132,22 @@ const JourneySection: React.FC = () => {
   return (
     <section ref={containerRef} className="relative py-32 px-4">
       {/* Section header */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="text-center mb-24"
-      >
-        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground mb-4 font-body">
-          A journey through
-        </p>
-        <h2 className="text-3xl md:text-5xl font-display text-gradient-sunset">
-          Our Cherished Memories
-        </h2>
-      </motion.div>
+      <div style={{ perspective: '1000px' }}>
+        <motion.div
+          initial={{ opacity: 0, rotateX: 20, y: 40 }}
+          whileInView={{ opacity: 1, rotateX: 0, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-24"
+        >
+          <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground mb-4 font-body">
+            A journey through
+          </p>
+          <h2 className="text-3xl md:text-5xl font-display text-gradient-sunset">
+            Our Cherished Memories
+          </h2>
+        </motion.div>
+      </div>
 
       {/* Timeline line */}
       <div className="absolute left-1/2 top-48 bottom-32 w-px bg-border/30 -translate-x-1/2 hidden md:block">
@@ -111,10 +157,10 @@ const JourneySection: React.FC = () => {
         />
       </div>
 
-      {/* Memory cards */}
-      <div className="space-y-24 md:space-y-32 relative z-10">
+      {/* Memory step cards */}
+      <div className="space-y-20 md:space-y-28 relative z-10">
         {memories.map((memory, index) => (
-          <MemoryCard key={index} memory={memory} index={index} />
+          <StepCard key={index} memory={memory} index={index} />
         ))}
       </div>
     </section>
