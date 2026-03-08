@@ -731,13 +731,16 @@ const WindPetals: React.FC<{ isTransitioning: boolean; petalTexture: THREE.Textu
 
   const petals = useMemo(
     () =>
-      Array.from({ length: 170 }, (_, i) => ({
+      Array.from({ length: 350 }, (_, i) => ({
         depth: -130 + hash(i * 1.7) * 165,
-        yOffset: -1 + hash(i * 3.2) * 10,
+        yOffset: -2 + hash(i * 3.2) * 12,
         offset: hash(i * 4.9) * 36,
-        speed: 0.6 + hash(i * 6.1) * 1.5,
-        sway: 0.7 + hash(i * 7.3) * 2,
-        size: 0.05 + hash(i * 8.7) * 0.1,
+        speed: 0.4 + hash(i * 6.1) * 1.8,
+        sway: 0.5 + hash(i * 7.3) * 2.5,
+        size: 0.06 + hash(i * 8.7) * 0.14,
+        xSpread: (hash(i * 9.3) - 0.5) * 30,
+        wobble: hash(i * 10.1) * Math.PI * 2,
+        fallSpeed: 0.15 + hash(i * 11.3) * 0.35,
       })),
     []
   );
@@ -747,36 +750,52 @@ const WindPetals: React.FC<{ isTransitioning: boolean; petalTexture: THREE.Textu
 
     if (isTransitioning && !prevRef.current) gustRef.current = 1;
     prevRef.current = isTransitioning;
-    gustRef.current = Math.max(0, gustRef.current - 0.018);
+    gustRef.current = Math.max(0, gustRef.current - 0.012);
 
-    const wind = 1 + gustRef.current * 2.9;
+    const wind = 1 + gustRef.current * 4;
     const t = clock.elapsedTime;
+    // Base wind direction shifts over time
+    const windAngle = Math.sin(t * 0.15) * 0.4;
+    const windX = Math.cos(windAngle) * wind;
+    const windZ = Math.sin(windAngle) * wind * 0.3;
 
     groupRef.current.children.forEach((child, i) => {
       if (!(child instanceof THREE.Sprite)) return;
       const p = petals[i];
       if (!p) return;
 
-      const cycle = (t * p.speed * wind + p.offset) % 35;
-      const x = -14 + ((cycle * 1.18 + Math.sin(cycle * 0.28)) % 28);
-      const y = 6.5 - cycle * 0.34 + Math.sin(cycle * p.sway) * 0.65 + p.yOffset;
-      const z = p.depth + Math.sin(cycle * 0.44 + p.offset) * 1.3;
+      const cycle = (t * p.speed * wind + p.offset) % 45;
+      // Wind-blown horizontal drift
+      const x = p.xSpread * 0.5 + Math.sin(cycle * 0.18 + p.wobble) * 4 * windX
+        + Math.cos(cycle * 0.07) * 2;
+      // Falling with gusts lifting petals
+      const lift = gustRef.current * Math.sin(t * 3 + p.offset) * 2;
+      const y = 8 - cycle * p.fallSpeed + Math.sin(cycle * p.sway) * 0.8 + p.yOffset + lift;
+      const z = p.depth + Math.sin(cycle * 0.44 + p.offset) * 1.5 + windZ * Math.sin(cycle * 0.1);
 
       child.position.set(x, y, z);
-      child.rotation.set(cycle * 0.85, Math.sin(cycle * 1.8) * 1.3, cycle * 0.72);
-      child.scale.set(p.size * 1.35, p.size, 1);
+      // Tumbling rotation
+      child.rotation.set(
+        cycle * 1.2 + Math.sin(t * 2 + p.offset) * 0.5,
+        Math.sin(cycle * 1.8 + p.wobble) * 1.5,
+        cycle * 0.9 + Math.cos(t * 1.5 + p.offset) * 0.3
+      );
+      child.scale.set(p.size * 1.4, p.size * 0.8, 1);
 
       const mat = child.material as THREE.SpriteMaterial;
-      mat.opacity = y > 5.4 || y < -4 ? 0.14 : 0.84;
+      mat.opacity = y > 7 || y < -5 ? 0.1 : 0.85;
     });
   });
 
   return (
     <group ref={groupRef}>
       {petals.map((_, i) => {
-        const h = i % 3 === 0 ? 335 : i % 3 === 1 ? 346 : 329;
-        const s = i % 3 === 0 ? 80 : i % 3 === 1 ? 74 : 76;
-        const l = i % 3 === 0 ? 78 : i % 3 === 1 ? 84 : 74;
+        // More color variety — deep pinks, soft whites, warm roses
+        const colors: [number, number, number][] = [
+          [340, 75, 78], [335, 60, 85], [345, 50, 88],
+          [338, 70, 74], [330, 55, 82], [348, 45, 90],
+        ];
+        const [h, s, l] = colors[i % colors.length];
 
         return (
           <sprite key={i}>
@@ -784,7 +803,7 @@ const WindPetals: React.FC<{ isTransitioning: boolean; petalTexture: THREE.Textu
               map={petalTexture}
               color={toColor(h, s, l)}
               transparent
-              opacity={0.84}
+              opacity={0.85}
               depthWrite={false}
             />
           </sprite>
