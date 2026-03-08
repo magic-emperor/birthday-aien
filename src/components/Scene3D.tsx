@@ -56,7 +56,7 @@ const DriftingParticles: React.FC = () => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.04} color="hsl(25, 90%, 58%)" transparent opacity={0.25} sizeAttenuation />
+      <pointsMaterial size={0.04} color="hsl(200, 70%, 65%)" transparent opacity={0.25} sizeAttenuation />
     </points>
   );
 };
@@ -96,7 +96,7 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
 const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const lanterns = useMemo(() => {
     const items: { position: [number, number, number]; color: string; speed: number }[] = [];
-    const colors = ['#d4732a', '#c44a6e', '#d4a030', '#e88a5a', '#b84060'];
+    const colors = ['#5ba8d4', '#b070c4', '#d470a0', '#70a0d4', '#9080d4'];
     for (let i = 0; i < 20; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = 3 + Math.random() * 6;
@@ -115,9 +115,9 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
 
   return (
     <>
-      <fog attach="fog" args={['hsl(30, 40%, 6%)', 5, 25]} />
-      <ambientLight intensity={0.1} />
-      <directionalLight position={[5, 5, 10]} intensity={0.2} color="#d4732a" />
+      <fog attach="fog" args={['hsl(240, 15%, 8%)', 5, 25]} />
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[5, 5, 10]} intensity={0.25} color="#5ba8d4" />
 
       <Stars radius={30} depth={50} count={2000} factor={2.5} saturation={0.3} fade speed={0.3} />
       <DriftingParticles />

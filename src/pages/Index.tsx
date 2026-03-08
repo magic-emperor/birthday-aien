@@ -49,11 +49,11 @@ const Index = () => {
       if (sectionContentRef.current) {
         sectionContentRef.current.scrollTop = 0;
       }
-    }, 400);
+    }, 600);
 
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 1200);
+    }, 1800);
   }, [currentSection, isTransitioning]);
 
   // Wheel handler — navigate sections when content is at boundary
@@ -128,15 +128,15 @@ const Index = () => {
   const flyVariants = {
     enterForward: {
       opacity: 0,
-      scale: 0.3,
-      z: -800,
-      filter: 'blur(20px)',
+      scale: 0.4,
+      z: -600,
+      filter: 'blur(16px)',
     },
     enterBackward: {
       opacity: 0,
-      scale: 2,
-      z: 400,
-      filter: 'blur(20px)',
+      scale: 1.8,
+      z: 300,
+      filter: 'blur(16px)',
     },
     center: {
       opacity: 1,
@@ -144,28 +144,28 @@ const Index = () => {
       z: 0,
       filter: 'blur(0px)',
       transition: {
-        duration: 0.8,
-        ease: [0.16, 1, 0.3, 1],
+        duration: 1.4,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
     exitForward: {
       opacity: 0,
-      scale: 2.5,
-      z: 500,
-      filter: 'blur(12px)',
+      scale: 2,
+      z: 400,
+      filter: 'blur(10px)',
       transition: {
-        duration: 0.6,
-        ease: [0.7, 0, 0.84, 0],
+        duration: 1,
+        ease: [0.55, 0, 1, 0.45],
       },
     },
     exitBackward: {
       opacity: 0,
-      scale: 0.2,
-      z: -1000,
-      filter: 'blur(12px)',
+      scale: 0.3,
+      z: -800,
+      filter: 'blur(10px)',
       transition: {
-        duration: 0.6,
-        ease: [0.7, 0, 0.84, 0],
+        duration: 1,
+        ease: [0.55, 0, 1, 0.45],
       },
     },
   };
