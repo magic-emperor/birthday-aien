@@ -1313,9 +1313,9 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
       <FlowingRiver />
       <TreeRows />
       <AtmosphericMist />
-      <Fireflies />
+      <Fireflies isNight={isNight} />
       <KoiFish />
-      <ShootingStars />
+      <ShootingStars isNight={isNight} />
       <WindPetals isTransitioning={isTransitioning} petalTexture={petalTexture} />
 
       <ReactiveCamera currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
