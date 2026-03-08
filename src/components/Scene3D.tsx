@@ -424,7 +424,7 @@ const FlowingRiver: React.FC = () => {
   const shimmerBaseRef = useRef<Float32Array | null>(null);
 
   const riverGeometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(1, 220, 128, 400);
+    const geo = new THREE.PlaneGeometry(1, 220, 64, 200);
     const pos = geo.attributes.position;
     const arr = pos.array as Float32Array;
     for (let i = 0; i < pos.count; i++) {
