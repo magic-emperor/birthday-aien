@@ -115,9 +115,9 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
 
   return (
     <>
-      <fog attach="fog" args={['hsl(30, 40%, 6%)', 5, 25]} />
-      <ambientLight intensity={0.1} />
-      <directionalLight position={[5, 5, 10]} intensity={0.2} color="#d4732a" />
+      <fog attach="fog" args={['hsl(240, 15%, 8%)', 5, 25]} />
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[5, 5, 10]} intensity={0.25} color="#5ba8d4" />
 
       <Stars radius={30} depth={50} count={2000} factor={2.5} saturation={0.3} fade speed={0.3} />
       <DriftingParticles />
