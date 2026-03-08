@@ -1014,6 +1014,160 @@ const AtmosphericMist: React.FC = () => (
   </group>
 );
 
+// ===== FIREFLIES =====
+const Fireflies: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const COUNT = 40;
+
+  const flies = useMemo(() =>
+    Array.from({ length: COUNT }, (_, i) => ({
+      x: (hash(i * 3.1) - 0.5) * 60,
+      y: -1.5 + hash(i * 5.3) * 4,
+      z: -140 + hash(i * 7.7) * 180,
+      speed: 0.3 + hash(i * 9.1) * 0.6,
+      phase: hash(i * 11.3) * Math.PI * 2,
+      drift: 0.5 + hash(i * 13.7) * 1.5,
+      pulseSpeed: 1.5 + hash(i * 15.1) * 2,
+    })), []
+  );
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.elapsedTime;
+    groupRef.current.children.forEach((child, i) => {
+      const f = flies[i];
+      if (!f) return;
+      child.position.x = f.x + Math.sin(t * f.speed + f.phase) * f.drift;
+      child.position.y = f.y + Math.sin(t * f.speed * 1.3 + f.phase * 0.7) * 0.6;
+      child.position.z = f.z + Math.cos(t * f.speed * 0.8 + f.phase * 1.2) * f.drift * 0.5;
+      const glow = 0.3 + Math.sin(t * f.pulseSpeed + f.phase) * 0.7;
+      const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      mat.opacity = Math.max(0.1, glow);
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {flies.map((f, i) => (
+        <mesh key={i} position={[f.x, f.y, f.z]}>
+          <sphereGeometry args={[0.06, 6, 6]} />
+          <meshBasicMaterial color={toColor(55, 100, 70)} transparent opacity={0.6} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+// ===== KOI FISH in river =====
+const KoiFish: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const FISH_COUNT = 6;
+
+  const fish = useMemo(() =>
+    Array.from({ length: FISH_COUNT }, (_, i) => ({
+      startZ: -100 + hash(i * 3.3) * 120,
+      speed: 0.8 + hash(i * 5.1) * 1.2,
+      offset: hash(i * 7.7) * Math.PI * 2,
+      size: 0.25 + hash(i * 9.3) * 0.2,
+      hue: hash(i * 11.1) > 0.5 ? 15 : 35, // orange or gold
+      sat: 70 + hash(i * 13.3) * 25,
+      light: 50 + hash(i * 15.7) * 15,
+    })), []
+  );
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.elapsedTime;
+    groupRef.current.children.forEach((child, i) => {
+      const f = fish[i];
+      if (!f) return;
+      const z = f.startZ + Math.sin(t * f.speed * 0.3 + f.offset) * 15;
+      const center = Math.sin(z * 0.035) * 2.2 + Math.sin(z * 0.011 + 1.5) * 1.5;
+      const x = center + Math.sin(t * f.speed + f.offset) * 3;
+      child.position.set(x, -3.0, z);
+      child.rotation.y = Math.atan2(
+        Math.cos(t * f.speed + f.offset) * 3,
+        Math.cos(t * f.speed * 0.3 + f.offset) * 15 * f.speed * 0.3
+      );
+      // Tail wiggle
+      child.rotation.z = Math.sin(t * 6 + f.offset) * 0.15;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {fish.map((f, i) => (
+        <group key={i} position={[0, -3.0, f.startZ]}>
+          {/* Body */}
+          <mesh scale={[f.size * 1.8, f.size * 0.5, f.size]}>
+            <sphereGeometry args={[1, 8, 6]} />
+            <meshStandardMaterial color={toColor(f.hue, f.sat, f.light)} roughness={0.3} metalness={0.2} />
+          </mesh>
+          {/* Tail */}
+          <mesh position={[-f.size * 1.6, 0, 0]} scale={[f.size * 0.8, f.size * 0.6, f.size * 0.3]}>
+            <coneGeometry args={[1, 1.5, 4]} />
+            <meshStandardMaterial color={toColor(f.hue, f.sat - 10, f.light - 5)} roughness={0.4} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+};
+
+// ===== SHOOTING STARS =====
+const ShootingStars: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const STAR_COUNT = 3;
+
+  const stars = useMemo(() =>
+    Array.from({ length: STAR_COUNT }, (_, i) => ({
+      interval: 8 + hash(i * 3.1) * 12, // seconds between appearances
+      duration: 0.8 + hash(i * 5.3) * 0.6,
+      startX: -40 + hash(i * 7.7) * 30,
+      startY: 18 + hash(i * 9.1) * 12,
+      startZ: -140 + hash(i * 11.3) * 40,
+      dx: 30 + hash(i * 13.7) * 20,
+      dy: -(8 + hash(i * 15.1) * 6),
+      offset: hash(i * 17.3) * 20,
+    })), []
+  );
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.elapsedTime;
+    groupRef.current.children.forEach((child, i) => {
+      const s = stars[i];
+      if (!s) return;
+      const cycle = (t + s.offset) % s.interval;
+      const progress = cycle / s.duration;
+
+      if (progress >= 0 && progress <= 1) {
+        child.visible = true;
+        child.position.x = s.startX + s.dx * progress;
+        child.position.y = s.startY + s.dy * progress;
+        child.position.z = s.startZ;
+        const fade = progress < 0.2 ? progress / 0.2 : progress > 0.7 ? (1 - progress) / 0.3 : 1;
+        child.scale.setScalar(0.8 + fade * 0.5);
+        const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+        mat.opacity = fade * 0.9;
+      } else {
+        child.visible = false;
+      }
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {stars.map((s, i) => (
+        <mesh key={i} visible={false}>
+          <sphereGeometry args={[0.15, 6, 6]} />
+          <meshBasicMaterial color={toColor(45, 90, 95)} transparent opacity={0} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
 const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const target = useRef(new THREE.Vector3(0, 0, 0));
   const look = useRef(new THREE.Vector3(0, -1, -20));
