@@ -264,6 +264,54 @@ const MountainRange: React.FC = () => (
   </group>
 );
 
+// ===== GRASS FIELD on both sides =====
+const GrassField: React.FC = () => {
+  const grassRef = useRef<THREE.Group>(null);
+
+  const blades = useMemo(() =>
+    Array.from({ length: 600 }, (_, i) => {
+      const side = i % 2 === 0 ? -1 : 1;
+      const x = side * (14 + hash(i * 3.1) * 22);
+      const z = -145 + hash(i * 5.7) * 195;
+      const height = 0.4 + hash(i * 7.3) * 0.8;
+      const width = 0.06 + hash(i * 9.1) * 0.08;
+      const lean = (hash(i * 11.3) - 0.5) * 0.4;
+      const hue = 95 + hash(i * 13.7) * 35;
+      const sat = 40 + hash(i * 15.1) * 30;
+      const light = 25 + hash(i * 17.9) * 20;
+      const phase = hash(i * 19.3) * Math.PI * 2;
+      const speed = 1.2 + hash(i * 21.7) * 1.5;
+      return { x, z, height, width, lean, hue, sat, light, phase, speed };
+    }), []
+  );
+
+  useFrame(({ clock }) => {
+    if (!grassRef.current) return;
+    const t = clock.elapsedTime;
+    grassRef.current.children.forEach((child, i) => {
+      const blade = blades[i];
+      if (!blade) return;
+      const sway = Math.sin(t * blade.speed + blade.phase) * 0.15 + Math.sin(t * 0.7 + blade.phase * 1.3) * 0.08;
+      child.rotation.z = blade.lean + sway;
+    });
+  });
+
+  return (
+    <group ref={grassRef}>
+      {blades.map((b, i) => (
+        <mesh key={i} position={[b.x, -2.85, b.z]} rotation={[0, hash(i * 23.1) * Math.PI, b.lean]}>
+          <planeGeometry args={[b.width, b.height]} />
+          <meshStandardMaterial
+            color={toColor(b.hue, b.sat, b.light)}
+            roughness={0.9}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
 // ===== ENHANCED RIVER BANKS with pebbles =====
 const RiverBanks: React.FC = () => {
   const pebbles = useMemo(() =>
