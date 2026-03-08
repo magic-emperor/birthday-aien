@@ -43,23 +43,48 @@ const MusicPage: React.FC = () => {
       return;
     }
 
-    // Otherwise search
+    // Otherwise search via CORS proxy → Piped API
     setIsSearching(true);
     setSearchResults([]);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('youtube-search', {
-        body: { query: query.trim() },
-      });
-      if (fnError) throw fnError;
-      if (data?.error) throw new Error(data.error);
-      if (data?.results) {
-        setSearchResults(data.results);
+
+    const PIPED_INSTANCES = [
+      'https://pipedapi.kavin.rocks',
+      'https://pipedapi.adminforge.de',
+      'https://pipedapi.in.projectsegfau.lt',
+      'https://api.piped.yt',
+    ];
+
+    for (const instance of PIPED_INSTANCES) {
+      try {
+        const targetUrl = `${instance}/search?q=${encodeURIComponent(query.trim())}&filter=videos`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          setSearchResults(
+            data.items
+              .filter((item: any) => item.url?.includes('/watch'))
+              .slice(0, 10)
+              .map((item: any) => ({
+                videoId: item.url?.replace('/watch?v=', '') || '',
+                title: item.title || 'Untitled',
+                thumbnail: item.thumbnail || '',
+                uploaderName: item.uploaderName || '',
+              }))
+          );
+          setIsSearching(false);
+          return;
+        }
+      } catch {
+        continue;
       }
-    } catch (err: any) {
-      setError(err?.message || 'Search failed. Please try again.');
-    } finally {
-      setIsSearching(false);
     }
+
+    setError('Search failed. Please try again or paste a YouTube link.');
+    setIsSearching(false);
   }, [query]);
 
   const audioBars = useMemo(() =>
