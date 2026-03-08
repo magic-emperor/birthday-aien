@@ -223,3 +223,9 @@
   transform-origin: 250px 220px;
   animation: branch-sway-top 7s ease-in-out infinite;
 }
+
+.night-mode {
+  --foreground: 0 0% 92%;
+  --muted-foreground: 220 15% 75%;
+  --card-foreground: 0 0% 90%;
+}
