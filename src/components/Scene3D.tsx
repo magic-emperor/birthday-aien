@@ -113,9 +113,9 @@ const SkyDome: React.FC<{ isNight: boolean }> = ({ isNight }) => {
     const dayTop = toColor(207, 72, 67);
     const dayMid = toColor(205, 68, 77);
     const dayBot = toColor(194, 56, 88);
-    const nightTop = toColor(230, 60, 8);
-    const nightMid = toColor(225, 50, 15);
-    const nightBot = toColor(220, 40, 22);
+    const nightTop = toColor(230, 70, 4);
+    const nightMid = toColor(225, 60, 7);
+    const nightBot = toColor(220, 50, 10);
     const speed = 0.03;
     if (isNight) {
       material.uniforms.topColor.value.lerp(nightTop, speed);
