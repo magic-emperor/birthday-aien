@@ -41,6 +41,8 @@
     --sunset-rose: 330 60% 65%;
     --sunset-peach: 290 40% 75%;
     --sunset-cream: 220 30% 96%;
+    --sky-mist: 210 40% 92%;
+    --moss: 120 25% 32%;
     --sunset-deep: 280 30% 20%;
     --sunset-warm: 200 50% 78%;
 
@@ -129,6 +131,22 @@
   100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
 }
 
+@keyframes branch-sway-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-0.8deg); }
+}
+
+@keyframes branch-sway-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.8deg); }
+}
+
+@keyframes branch-sway-top {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-0.4deg); }
+  75% { transform: rotate(0.4deg); }
+}
+
 @keyframes petal-fall {
   0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
   10% { opacity: 0.8; }
@@ -161,4 +179,19 @@
 
 .animate-gentle-bounce {
   animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+.branch-sway-left {
+  transform-origin: 250px 350px;
+  animation: branch-sway-left 5s ease-in-out infinite;
+}
+
+.branch-sway-right {
+  transform-origin: 250px 340px;
+  animation: branch-sway-right 5.5s ease-in-out infinite;
+}
+
+.branch-sway-top {
+  transform-origin: 250px 220px;
+  animation: branch-sway-top 7s ease-in-out infinite;
 }
