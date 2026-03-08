@@ -176,7 +176,9 @@ const Index = () => {
       {/* 3D Background with tree */}
       <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
 
-      {/* Main content layer */}
+      {/* Falling petals overlay */}
+      <FallingPetals />
+
       <div className="fixed inset-0 z-10" style={{ perspective: '1200px' }}>
         <AnimatePresence mode="wait">
           <motion.div
