@@ -302,16 +302,18 @@ const GrassField: React.FC = () => {
     return { matrix, bladeData };
   }, []);
 
-  // Set initial matrices
-  useMemo(() => {
-    if (!meshRef.current) return;
+  const initDone = useRef(false);
+
+  useFrame(() => {
+    if (!meshRef.current || initDone.current) return;
     const m = new THREE.Matrix4();
     for (let i = 0; i < BLADE_COUNT; i++) {
       m.fromArray(matrix, i * 16);
       meshRef.current.setMatrixAt(i, m);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [matrix]);
+    initDone.current = true;
+  });
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
