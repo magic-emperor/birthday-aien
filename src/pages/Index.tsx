@@ -187,8 +187,8 @@ const Index = () => {
             className="absolute inset-0 flex items-center justify-center"
             style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* Solid opaque background per section */}
-            <div className="absolute inset-0 bg-background/90 backdrop-blur-lg" />
+            {/* Semi-transparent backdrop so landscape shows through */}
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
 
             {/* Scrollable content container */}
             <div
