@@ -251,6 +251,16 @@ const Index = () => {
         ))}
       </div>
 
+      {/* Chat viewer link */}
+      <a
+        href="/our-chats"
+        className="fixed top-6 right-[8.5rem] z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label="Our Chats"
+        style={{ pointerEvents: 'auto' }}
+      >
+        💬
+      </a>
+
       {/* Music link */}
       <a
         href="/music"
