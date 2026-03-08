@@ -83,26 +83,26 @@
 
 @layer utilities {
   .text-gradient-sunset {
-    background: linear-gradient(135deg, hsl(40 85% 55%), hsl(25 90% 58%), hsl(340 45% 55%));
+    background: linear-gradient(135deg, hsl(200 70% 70%), hsl(280 50% 72%), hsl(320 50% 72%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-sunset {
-    background: linear-gradient(135deg, hsl(25 90% 58%), hsl(340 45% 55%));
+    background: linear-gradient(135deg, hsl(200 70% 65%), hsl(320 50% 68%));
   }
 
   .bg-gradient-warm {
-    background: linear-gradient(180deg, hsl(30 40% 6%), hsl(15 60% 12%));
+    background: linear-gradient(180deg, hsl(240 15% 8%), hsl(250 20% 14%));
   }
 
   .glow-warm {
-    box-shadow: 0 0 60px hsl(25 90% 58% / 0.2), 0 0 120px hsl(340 45% 55% / 0.1);
+    box-shadow: 0 0 60px hsl(200 70% 65% / 0.2), 0 0 120px hsl(280 45% 65% / 0.1);
   }
 
   .text-shadow-warm {
-    text-shadow: 0 0 40px hsl(25 90% 58% / 0.5);
+    text-shadow: 0 0 40px hsl(200 70% 65% / 0.5);
   }
 }
 
