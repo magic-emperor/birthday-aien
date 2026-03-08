@@ -1,6 +1,5 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface SceneProps {
@@ -9,169 +8,328 @@ interface SceneProps {
   isTransitioning: boolean;
 }
 
-// ─── Plum Blossom Tree ─────────────────────────────────────────
-const BlossomTree: React.FC<{ currentSection: number; totalSections: number }> = ({ currentSection, totalSections }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const targetRotation = useRef(0);
+// ─── Weeping Branch: a curved line of segments with blossoms ────
+const WeepingBranch: React.FC<{
+  origin: [number, number, number];
+  direction: [number, number, number];
+  length: number;
+  droop: number;
+  thickness: number;
+  blossomDensity: number;
+  time: number;
+  windStrength: number;
+}> = ({ origin, direction, length, droop, thickness, blossomDensity, time, windStrength }) => {
+  const segments = 12;
+  const points = useMemo(() => {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const x = origin[0] + direction[0] * t * length;
+      const y = origin[1] + direction[1] * t * length - t * t * droop;
+      const z = origin[2] + direction[2] * t * length;
+      pts.push(new THREE.Vector3(x, y, z));
+    }
+    return pts;
+  }, [origin, direction, length, droop]);
 
-  useFrame(({ clock }) => {
+  // Animate points for wind sway
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
     if (!groupRef.current) return;
-    const t = clock.elapsedTime;
-    // Rotate tree based on section
-    targetRotation.current = (currentSection / (totalSections - 1)) * Math.PI * 2;
-    groupRef.current.rotation.y += (targetRotation.current - groupRef.current.rotation.y) * 0.015;
-    // Gentle sway
-    groupRef.current.rotation.z = Math.sin(t * 0.4) * 0.03;
+    // Sway the tip more than the base
+    groupRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Mesh || child instanceof THREE.Group) {
+        const t = i / groupRef.current!.children.length;
+        const sway = Math.sin(time * 0.8 + t * 3) * windStrength * t * t;
+        const swayZ = Math.cos(time * 0.6 + t * 2) * windStrength * 0.5 * t * t;
+        child.position.x = (child.userData.baseX || 0) + sway;
+        child.position.z = (child.userData.baseZ || 0) + swayZ;
+      }
+    });
   });
 
+  const blossomPositions = useMemo(() => {
+    const bps: { pos: THREE.Vector3; size: number; color: string }[] = [];
+    const colors = ['#e87aaa', '#f090b8', '#d06890', '#f5a8c8', '#c05880', '#f0c0d8', '#e068a0', '#f8b0d0'];
+    for (let i = 2; i <= segments; i++) {
+      const count = Math.floor(blossomDensity * (0.5 + Math.random()));
+      for (let j = 0; j < count; j++) {
+        const base = points[i];
+        const offset = new THREE.Vector3(
+          (Math.random() - 0.5) * 0.25,
+          (Math.random() - 0.5) * 0.2,
+          (Math.random() - 0.5) * 0.25
+        );
+        bps.push({
+          pos: base.clone().add(offset),
+          size: 0.02 + Math.random() * 0.04,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        });
+      }
+    }
+    return bps;
+  }, [points, blossomDensity]);
+
   return (
-    <group ref={groupRef} position={[0, -3.5, -4]} scale={[1.1, 1.1, 1.1]}>
-      {/* Trunk */}
-      <mesh position={[0, 1.2, 0]} rotation={[0, 0, 0.08]}>
-        <cylinderGeometry args={[0.08, 0.18, 3, 8]} />
-        <meshStandardMaterial color="#5a3a28" roughness={0.9} />
-      </mesh>
+    <group ref={groupRef}>
+      {/* Branch segments */}
+      {points.slice(0, -1).map((pt, i) => {
+        const next = points[i + 1];
+        const mid = pt.clone().add(next).multiplyScalar(0.5);
+        const dir = next.clone().sub(pt);
+        const len = dir.length();
+        const axis = new THREE.Vector3(0, 1, 0);
+        const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir.normalize());
+        const t = i / segments;
+        const rad = thickness * (1 - t * 0.7);
 
-      {/* Main branches */}
-      {[
-        { pos: [0.3, 2.6, 0] as [number,number,number], rot: [0, 0, 0.6] as [number,number,number], len: 1.8 },
-        { pos: [-0.2, 2.8, 0.2] as [number,number,number], rot: [0.3, 0.5, -0.5] as [number,number,number], len: 1.5 },
-        { pos: [0.1, 2.4, -0.2] as [number,number,number], rot: [-0.2, -0.3, 0.7] as [number,number,number], len: 1.6 },
-        { pos: [-0.3, 2.2, 0] as [number,number,number], rot: [0, 0.2, -0.8] as [number,number,number], len: 1.3 },
-        { pos: [0.15, 3.0, 0.1] as [number,number,number], rot: [0.1, -0.4, 0.4] as [number,number,number], len: 1.2 },
-      ].map((branch, i) => (
-        <group key={i} position={branch.pos} rotation={branch.rot}>
-          <mesh>
-            <cylinderGeometry args={[0.02, 0.05, branch.len, 6]} />
-            <meshStandardMaterial color="#6b4430" roughness={0.85} />
-          </mesh>
-          {/* Sub-branches */}
-          {[0.3, 0.6, 0.85].map((t, j) => (
-            <group key={j} position={[0, branch.len * (t - 0.5), 0]} rotation={[Math.random() * 0.4, 0, (j % 2 === 0 ? 1 : -1) * 0.8]}>
-              <mesh>
-                <cylinderGeometry args={[0.01, 0.025, 0.5, 4]} />
-                <meshStandardMaterial color="#7a5540" roughness={0.85} />
-              </mesh>
-            </group>
-          ))}
-        </group>
-      ))}
-
-      {/* Blossom clusters on branches */}
-      <BlossomClusters />
-
-      {/* Roots at base */}
-      {[0, 1, 2, 3].map((i) => {
-        const angle = (i / 4) * Math.PI * 2 + 0.3;
         return (
-          <mesh key={`root-${i}`} position={[Math.cos(angle) * 0.2, -0.2, Math.sin(angle) * 0.2]} rotation={[0, angle, Math.PI / 2 - 0.3]}>
-            <cylinderGeometry args={[0.02, 0.06, 0.6, 4]} />
-            <meshStandardMaterial color="#4a2a18" roughness={0.95} />
+          <mesh
+            key={`seg-${i}`}
+            position={[mid.x, mid.y, mid.z]}
+            quaternion={quat}
+            userData={{ baseX: mid.x, baseZ: mid.z }}
+          >
+            <cylinderGeometry args={[rad * 0.6, rad, len, 5]} />
+            <meshStandardMaterial color="#5a3525" roughness={0.9} />
           </mesh>
         );
       })}
+
+      {/* Blossoms along branch */}
+      {blossomPositions.map((b, i) => (
+        <group key={`bl-${i}`} position={[b.pos.x, b.pos.y, b.pos.z]} userData={{ baseX: b.pos.x, baseZ: b.pos.z }}>
+          {/* 5 petals arranged in a flower */}
+          {[0, 1, 2, 3, 4].map((p) => {
+            const angle = (p / 5) * Math.PI * 2;
+            const px = Math.cos(angle) * b.size * 1.2;
+            const py = Math.sin(angle) * b.size * 1.2;
+            return (
+              <mesh key={p} position={[px, py, 0]} rotation={[0, 0, angle]}>
+                <sphereGeometry args={[b.size, 4, 4]} />
+                <meshStandardMaterial
+                  color={b.color}
+                  emissive={b.color}
+                  emissiveIntensity={0.35}
+                  transparent
+                  opacity={0.85}
+                />
+              </mesh>
+            );
+          })}
+          {/* Flower center */}
+          <mesh>
+            <sphereGeometry args={[b.size * 0.5, 4, 4]} />
+            <meshStandardMaterial color="#ffe8a0" emissive="#ffd860" emissiveIntensity={0.8} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 };
 
-const BlossomClusters: React.FC = () => {
-  const blossoms = useMemo(() => {
-    const items: { pos: [number, number, number]; scale: number; color: string }[] = [];
-    const colors = ['#f0a0c0', '#e890b0', '#f5b8d0', '#e080a0', '#f0c0d8', '#d870a0'];
-    // Scatter blossoms around branch tips
-    for (let i = 0; i < 60; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = 0.8 + Math.random() * 1.8;
-      const height = 2.2 + Math.random() * 1.8;
+// ─── Full Plum Blossom Tree ─────────────────────────────────────
+const PlumBlossomTree: React.FC<{ currentSection: number; totalSections: number }> = ({ currentSection, totalSections }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const targetRotation = useRef(0);
+  const timeRef = useRef(0);
+  const [windStrength, setWindStrength] = useState(0.15);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    timeRef.current = clock.elapsedTime;
+    targetRotation.current = (currentSection / (totalSections - 1)) * Math.PI * 1.8;
+    groupRef.current.rotation.y += (targetRotation.current - groupRef.current.rotation.y) * 0.012;
+    groupRef.current.rotation.z = Math.sin(clock.elapsedTime * 0.3) * 0.02;
+  });
+
+  // Weeping branches radiating outward and drooping down
+  const branches = useMemo(() => {
+    const items: {
+      origin: [number, number, number];
+      direction: [number, number, number];
+      length: number;
+      droop: number;
+      thickness: number;
+      blossomDensity: number;
+    }[] = [];
+
+    // Main upward branches that then have sub-weeping branches
+    const mainCount = 7;
+    for (let i = 0; i < mainCount; i++) {
+      const angle = (i / mainCount) * Math.PI * 2 + Math.random() * 0.3;
+      const tilt = 0.3 + Math.random() * 0.4;
+      const upness = 0.6 + Math.random() * 0.3;
+
+      // Main structural branch
       items.push({
-        pos: [Math.cos(angle) * radius, height, Math.sin(angle) * radius],
-        scale: 0.04 + Math.random() * 0.06,
-        color: colors[i % colors.length],
+        origin: [0, 1.8 + Math.random() * 0.8, 0],
+        direction: [Math.cos(angle) * tilt, upness, Math.sin(angle) * tilt],
+        length: 1.5 + Math.random() * 0.8,
+        droop: 0.3 + Math.random() * 0.3,
+        thickness: 0.04 + Math.random() * 0.02,
+        blossomDensity: 3 + Math.floor(Math.random() * 3),
       });
+
+      // Weeping sub-branches (the cascading ones from the image)
+      const subCount = 3 + Math.floor(Math.random() * 3);
+      for (let j = 0; j < subCount; j++) {
+        const subAngle = angle + (Math.random() - 0.5) * 0.8;
+        const branchT = 0.4 + Math.random() * 0.5;
+        const mainLen = 1.5 + Math.random() * 0.8;
+        const originY = 1.8 + Math.random() * 0.8 + upness * branchT * mainLen - branchT * branchT * (0.3 + Math.random() * 0.3);
+        const originX = Math.cos(angle) * tilt * branchT * mainLen;
+        const originZ = Math.sin(angle) * tilt * branchT * mainLen;
+
+        items.push({
+          origin: [originX, originY, originZ],
+          direction: [
+            Math.cos(subAngle) * (0.2 + Math.random() * 0.3),
+            -0.1 - Math.random() * 0.2,  // Drooping direction
+            Math.sin(subAngle) * (0.2 + Math.random() * 0.3),
+          ],
+          length: 1.0 + Math.random() * 1.2,
+          droop: 1.5 + Math.random() * 2.0,  // Heavy droop = weeping effect
+          thickness: 0.015 + Math.random() * 0.015,
+          blossomDensity: 4 + Math.floor(Math.random() * 4),
+        });
+      }
     }
+
     return items;
   }, []);
 
   return (
-    <>
-      {blossoms.map((b, i) => (
-        <Float key={i} speed={1 + Math.random()} rotationIntensity={0.2} floatIntensity={0.15}>
-          <mesh position={b.pos}>
-            <sphereGeometry args={[b.scale, 6, 6]} />
-            <meshStandardMaterial
-              color={b.color}
-              emissive={b.color}
-              emissiveIntensity={0.4}
-              transparent
-              opacity={0.85}
-            />
-          </mesh>
-        </Float>
+    <group ref={groupRef} position={[0, -3, -3]} scale={[1.3, 1.3, 1.3]}>
+      {/* Trunk */}
+      <mesh position={[0, 0.9, 0]}>
+        <cylinderGeometry args={[0.06, 0.14, 2.2, 8]} />
+        <meshStandardMaterial color="#4a2a18" roughness={0.95} />
+      </mesh>
+      {/* Trunk texture lines */}
+      {[0, 1, 2].map((i) => (
+        <mesh key={`bark-${i}`} position={[Math.sin(i * 2.1) * 0.08, 0.5 + i * 0.5, Math.cos(i * 2.1) * 0.08]}>
+          <cylinderGeometry args={[0.07, 0.1, 0.4, 6]} />
+          <meshStandardMaterial color="#3a1a10" roughness={1} transparent opacity={0.5} />
+        </mesh>
       ))}
-      {/* Glow lights in the canopy */}
-      <pointLight position={[0, 3.5, 0]} color="#f0a0c0" intensity={1.5} distance={5} decay={2} />
-      <pointLight position={[1, 2.8, 0.5]} color="#f5b8d0" intensity={0.8} distance={3} decay={2} />
-      <pointLight position={[-0.8, 3, -0.5]} color="#e890b0" intensity={0.8} distance={3} decay={2} />
-    </>
+
+      {/* All weeping branches */}
+      {branches.map((b, i) => (
+        <WeepingBranch
+          key={i}
+          {...b}
+          time={timeRef.current}
+          windStrength={windStrength}
+        />
+      ))}
+
+      {/* Canopy glow lights */}
+      <pointLight position={[0, 3, 0]} color="#f090b8" intensity={2} distance={6} decay={2} />
+      <pointLight position={[1.5, 2.5, 1]} color="#f5a8c8" intensity={1} distance={4} decay={2} />
+      <pointLight position={[-1, 2.8, -0.5]} color="#e878a8" intensity={1} distance={4} decay={2} />
+    </group>
   );
 };
 
-// ─── Flowing Water / Stream ─────────────────────────────────────
-const WaterStream: React.FC = () => {
+// ─── Flowing Water Surface ──────────────────────────────────────
+const FlowingWater: React.FC = () => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const originalPositions = useRef<Float32Array | null>(null);
 
   useFrame(({ clock }) => {
-    if (!meshRef.current || !matRef.current) return;
-    const t = clock.elapsedTime;
-    // Gentle undulation
-    const pos = meshRef.current.geometry.attributes.position;
+    if (!meshRef.current) return;
+    const geo = meshRef.current.geometry;
+    const pos = geo.attributes.position;
     const arr = pos.array as Float32Array;
+
+    if (!originalPositions.current) {
+      originalPositions.current = new Float32Array(arr);
+    }
+
+    const t = clock.elapsedTime;
+    const orig = originalPositions.current;
+
     for (let i = 0; i < pos.count; i++) {
-      const x = arr[i * 3];
-      const z = arr[i * 3 + 2];
-      arr[i * 3 + 1] = Math.sin(x * 2 + t * 1.5) * 0.04 + Math.cos(z * 3 + t * 1.2) * 0.03;
+      const ox = orig[i * 3];
+      const oz = orig[i * 3 + 2];
+      // Multiple wave layers for realistic water
+      arr[i * 3 + 1] =
+        Math.sin(ox * 1.5 + t * 2.0) * 0.06 +
+        Math.cos(oz * 2.0 + t * 1.5) * 0.04 +
+        Math.sin((ox + oz) * 0.8 + t * 0.8) * 0.03 +
+        Math.sin(ox * 4 + t * 3) * 0.015;  // Small ripples
     }
     pos.needsUpdate = true;
+    geo.computeVertexNormals();
   });
 
   return (
-    <mesh ref={meshRef} position={[0, -3.6, -3]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[8, 4, 32, 16]} />
-      <meshStandardMaterial
-        ref={matRef}
-        color="#88c8e8"
-        emissive="#60a0c8"
-        emissiveIntensity={0.15}
-        transparent
-        opacity={0.45}
-        roughness={0.1}
-        metalness={0.3}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <group position={[0, -3.8, -3]}>
+      {/* Main water surface */}
+      <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[12, 6, 48, 24]} />
+        <meshStandardMaterial
+          color="#78b8d8"
+          emissive="#4890b0"
+          emissiveIntensity={0.15}
+          transparent
+          opacity={0.55}
+          roughness={0.05}
+          metalness={0.4}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Water depth layer */}
+      <mesh position={[0, -0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[12, 6, 1, 1]} />
+        <meshStandardMaterial
+          color="#507090"
+          transparent
+          opacity={0.3}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Flowing light reflections */}
+      <WaterReflections />
+    </group>
   );
 };
 
-// Small ripple sparkles on water
-const WaterSparkles: React.FC = () => {
+const WaterReflections: React.FC = () => {
   const ref = useRef<THREE.Points>(null);
 
-  const positions = useMemo(() => {
-    const count = 80;
+  const { positions, speeds } = useMemo(() => {
+    const count = 120;
     const pos = new Float32Array(count * 3);
+    const spd = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 7;
-      pos[i * 3 + 1] = -3.5 + Math.random() * 0.1;
-      pos[i * 3 + 2] = -3 + (Math.random() - 0.5) * 3;
+      pos[i * 3] = (Math.random() - 0.5) * 10;
+      pos[i * 3 + 1] = 0.05 + Math.random() * 0.1;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 5;
+      spd[i] = 0.3 + Math.random() * 0.7;
     }
-    return pos;
+    return { positions: pos, speeds: spd };
   }, []);
 
   useFrame(({ clock }) => {
     if (!ref.current) return;
+    const arr = ref.current.geometry.attributes.position.array as Float32Array;
+    const t = clock.elapsedTime;
+    for (let i = 0; i < speeds.length; i++) {
+      // Drift slowly
+      arr[i * 3] += speeds[i] * 0.003;
+      arr[i * 3 + 1] = 0.05 + Math.sin(t * 2 + i) * 0.05;
+      // Reset if drifted too far
+      if (arr[i * 3] > 5) arr[i * 3] = -5;
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true;
+    // Twinkle
     const mat = ref.current.material as THREE.PointsMaterial;
-    mat.opacity = 0.3 + Math.sin(clock.elapsedTime * 2) * 0.15;
+    mat.opacity = 0.35 + Math.sin(t * 3) * 0.1;
   });
 
   return (
@@ -179,54 +337,64 @@ const WaterSparkles: React.FC = () => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} color="#c0e8ff" transparent opacity={0.4} sizeAttenuation />
+      <pointsMaterial size={0.06} color="#d0e8ff" transparent opacity={0.4} sizeAttenuation />
     </points>
   );
 };
 
-// ─── Wind Burst Petals (triggered on transition) ────────────────
+// ─── Wind Burst Petals ──────────────────────────────────────────
 const WindBurstPetals: React.FC<{ active: boolean }> = ({ active }) => {
   const groupRef = useRef<THREE.Group>(null);
   const [burst, setBurst] = useState(false);
-  const petalsRef = useRef<THREE.Mesh[]>([]);
+  const startTime = useRef(0);
 
   const petalData = useMemo(() => {
-    return Array.from({ length: 30 }, () => ({
+    return Array.from({ length: 40 }, () => ({
       startPos: new THREE.Vector3(
-        (Math.random() - 0.5) * 6,
-        (Math.random() - 0.3) * 4 + 1,
-        (Math.random() - 0.5) * 4
+        -3 + Math.random() * 2,
+        (Math.random()) * 4,
+        (Math.random() - 0.5) * 3
       ),
       velocity: new THREE.Vector3(
-        2 + Math.random() * 3,
-        (Math.random() - 0.5) * 2,
+        2.5 + Math.random() * 4,
+        (Math.random() - 0.3) * 2.5,
         (Math.random() - 0.5) * 2
       ),
-      rotSpeed: 2 + Math.random() * 4,
-      color: ['#e88aaf', '#f0a0c0', '#d480a0', '#f5b8d0', '#c87098'][Math.floor(Math.random() * 5)],
+      rotSpeed: 2 + Math.random() * 5,
+      size: 0.06 + Math.random() * 0.08,
+      color: ['#e87aaa', '#f090b8', '#d06890', '#f5a8c8', '#c05880', '#f8b0d0'][Math.floor(Math.random() * 6)],
     }));
   }, []);
 
   useEffect(() => {
-    if (active) {
+    if (active && !burst) {
       setBurst(true);
-      const timer = setTimeout(() => setBurst(false), 2500);
+      startTime.current = 0;
+      const timer = setTimeout(() => setBurst(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [active]);
 
   useFrame(({ clock }) => {
     if (!burst || !groupRef.current) return;
-    petalsRef.current.forEach((mesh, i) => {
-      if (!mesh) return;
+    if (startTime.current === 0) startTime.current = clock.elapsedTime;
+    const elapsed = clock.elapsedTime - startTime.current;
+
+    groupRef.current.children.forEach((child, i) => {
+      if (!(child instanceof THREE.Mesh)) return;
       const data = petalData[i];
-      const t = clock.elapsedTime % 3;
-      mesh.position.copy(data.startPos).addScaledVector(data.velocity, t * 0.8);
-      mesh.position.y -= t * t * 0.3; // Gravity
-      mesh.rotation.x = t * data.rotSpeed;
-      mesh.rotation.z = t * data.rotSpeed * 0.7;
-      const mat = mesh.material as THREE.MeshStandardMaterial;
-      mat.opacity = Math.max(0, 0.8 - t * 0.35);
+      if (!data) return;
+      const t = elapsed;
+      child.position.set(
+        data.startPos.x + data.velocity.x * t * 0.7,
+        data.startPos.y + data.velocity.y * t - t * t * 0.25,
+        data.startPos.z + data.velocity.z * t * 0.5
+      );
+      child.rotation.x = t * data.rotSpeed;
+      child.rotation.z = t * data.rotSpeed * 0.6;
+      child.rotation.y = Math.sin(t * 3) * 1;
+      const mat = child.material as THREE.MeshStandardMaterial;
+      mat.opacity = Math.max(0, 0.85 - elapsed * 0.3);
     });
   });
 
@@ -235,18 +403,14 @@ const WindBurstPetals: React.FC<{ active: boolean }> = ({ active }) => {
   return (
     <group ref={groupRef}>
       {petalData.map((data, i) => (
-        <mesh
-          key={i}
-          ref={(el) => { if (el) petalsRef.current[i] = el; }}
-          position={data.startPos.toArray() as [number, number, number]}
-        >
-          <planeGeometry args={[0.12, 0.18]} />
+        <mesh key={i} position={data.startPos.toArray() as [number, number, number]}>
+          <planeGeometry args={[data.size, data.size * 1.4]} />
           <meshStandardMaterial
             color={data.color}
             emissive={data.color}
             emissiveIntensity={0.3}
             transparent
-            opacity={0.8}
+            opacity={0.85}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -256,46 +420,63 @@ const WindBurstPetals: React.FC<{ active: boolean }> = ({ active }) => {
 };
 
 // ─── Ambient Falling Petals ─────────────────────────────────────
-const FallingPetal: React.FC<{
-  position: [number, number, number];
-  color: string;
-  speed: number;
-  swayAmount: number;
-  rotSpeed: number;
-  delay: number;
-}> = ({ position, color, speed, swayAmount, rotSpeed, delay }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const startY = position[1];
-  const startX = position[0];
+const FallingPetals: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+
+  const petals = useMemo(() => {
+    return Array.from({ length: 45 }, () => ({
+      startX: (Math.random() - 0.5) * 14,
+      startY: 5 + Math.random() * 8,
+      startZ: (Math.random() - 0.5) * 8,
+      speed: 0.2 + Math.random() * 0.35,
+      swayAmount: 0.5 + Math.random() * 1.5,
+      swaySpeed: 0.8 + Math.random() * 1.2,
+      rotSpeed: 0.3 + Math.random() * 1.2,
+      delay: Math.random() * 16,
+      size: 0.05 + Math.random() * 0.06,
+      color: ['#e87aaa', '#f090b8', '#d06890', '#f5a8c8', '#c05880', '#e068a0', '#f0c0d8'][Math.floor(Math.random() * 7)],
+    }));
+  }, []);
 
   useFrame(({ clock }) => {
-    if (!meshRef.current) return;
-    const t = (clock.elapsedTime * speed + delay) % 14;
-    meshRef.current.position.y = startY - t * 1.1;
-    meshRef.current.position.x = startX + Math.sin(t * 1.3) * swayAmount;
-    meshRef.current.position.z = position[2] + Math.cos(t * 0.7) * 0.4;
-    meshRef.current.rotation.x = t * rotSpeed * 0.4;
-    meshRef.current.rotation.y = t * rotSpeed * 0.25;
-    meshRef.current.rotation.z = Math.sin(t * 1.8) * 0.6;
+    if (!groupRef.current) return;
+    const t = clock.elapsedTime;
+    groupRef.current.children.forEach((child, i) => {
+      if (!(child instanceof THREE.Mesh)) return;
+      const p = petals[i];
+      if (!p) return;
+      const elapsed = (t * p.speed + p.delay) % 16;
 
-    const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-    if (t < 1.5) mat.opacity = (t / 1.5) * 0.7;
-    else if (t > 12) mat.opacity = ((14 - t) / 2) * 0.7;
-    else mat.opacity = 0.7;
+      child.position.y = p.startY - elapsed * 1.0;
+      child.position.x = p.startX + Math.sin(elapsed * p.swaySpeed) * p.swayAmount;
+      child.position.z = p.startZ + Math.cos(elapsed * p.swaySpeed * 0.7) * 0.4;
+      child.rotation.x = elapsed * p.rotSpeed * 0.4;
+      child.rotation.y = elapsed * p.rotSpeed * 0.25;
+      child.rotation.z = Math.sin(elapsed * 1.5) * 0.7;
+
+      const mat = child.material as THREE.MeshStandardMaterial;
+      if (elapsed < 1.5) mat.opacity = (elapsed / 1.5) * 0.65;
+      else if (elapsed > 14) mat.opacity = ((16 - elapsed) / 2) * 0.65;
+      else mat.opacity = 0.65;
+    });
   });
 
   return (
-    <mesh ref={meshRef} position={position}>
-      <planeGeometry args={[0.1, 0.14]} />
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={0.25}
-        transparent
-        opacity={0.7}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <group ref={groupRef}>
+      {petals.map((p, i) => (
+        <mesh key={i} position={[p.startX, p.startY, p.startZ]}>
+          <planeGeometry args={[p.size, p.size * 1.5]} />
+          <meshStandardMaterial
+            color={p.color}
+            emissive={p.color}
+            emissiveIntensity={0.2}
+            transparent
+            opacity={0.65}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
   );
 };
 
@@ -304,7 +485,7 @@ const SoftParticles: React.FC = () => {
   const ref = useRef<THREE.Points>(null);
 
   const positions = useMemo(() => {
-    const count = 200;
+    const count = 150;
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 30;
@@ -315,9 +496,7 @@ const SoftParticles: React.FC = () => {
   }, []);
 
   useFrame(({ clock }) => {
-    if (ref.current) {
-      ref.current.rotation.y = clock.elapsedTime * 0.008;
-    }
+    if (ref.current) ref.current.rotation.y = clock.elapsedTime * 0.006;
   });
 
   return (
@@ -325,15 +504,15 @@ const SoftParticles: React.FC = () => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.025} color="#f0d0e0" transparent opacity={0.25} sizeAttenuation />
+      <pointsMaterial size={0.02} color="#f0d0e0" transparent opacity={0.2} sizeAttenuation />
     </points>
   );
 };
 
 // ─── Camera ─────────────────────────────────────────────────────
 const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; isTransitioning: boolean }> = ({ currentSection, totalSections, isTransitioning }) => {
-  const targetPos = useRef(new THREE.Vector3(0, 0, 5));
-  const targetLook = useRef(new THREE.Vector3(0, 0, 0));
+  const targetPos = useRef(new THREE.Vector3(0, 0, 6));
+  const targetLook = useRef(new THREE.Vector3(0, -1, -2));
 
   useFrame(({ camera, clock }) => {
     const t = clock.elapsedTime;
@@ -341,17 +520,17 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
     const angle = progress * Math.PI * 1.5;
 
     targetPos.current.set(
-      Math.sin(angle) * 2.5 + Math.sin(t * 0.15) * 0.2,
-      0.5 + Math.cos(angle * 0.5) * 1 + Math.cos(t * 0.12) * 0.15,
-      6 - progress * 2
+      Math.sin(angle) * 3 + Math.sin(t * 0.12) * 0.2,
+      0.8 + Math.cos(angle * 0.5) * 0.8 + Math.cos(t * 0.1) * 0.1,
+      6.5 - progress * 2
     );
 
-    const speed = isTransitioning ? 0.025 : 0.012;
+    const speed = isTransitioning ? 0.025 : 0.01;
     camera.position.lerp(targetPos.current, speed);
 
     targetLook.current.set(
-      Math.sin(t * 0.08) * 0.3,
-      -0.5 + Math.cos(t * 0.06) * 0.2,
+      Math.sin(t * 0.07) * 0.3,
+      -0.8 + Math.cos(t * 0.05) * 0.2,
       -2
     );
     camera.lookAt(targetLook.current);
@@ -362,53 +541,32 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
 
 // ─── Main Scene ─────────────────────────────────────────────────
 const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
-  const petals = useMemo(() => {
-    const items: { position: [number, number, number]; color: string; speed: number; swayAmount: number; rotSpeed: number; delay: number }[] = [];
-    const colors = ['#e88aaf', '#f0a0c0', '#d480a0', '#f5b8d0', '#c87098', '#eea0b8'];
-    for (let i = 0; i < 35; i++) {
-      items.push({
-        position: [
-          (Math.random() - 0.5) * 14,
-          6 + Math.random() * 6,
-          (Math.random() - 0.5) * 8,
-        ],
-        color: colors[i % colors.length],
-        speed: 0.25 + Math.random() * 0.4,
-        swayAmount: 0.4 + Math.random() * 1.2,
-        rotSpeed: 0.5 + Math.random() * 1.5,
-        delay: Math.random() * 14,
-      });
-    }
-    return items;
-  }, []);
-
   return (
     <>
-      {/* Soft atmospheric fog */}
       <fog attach="fog" args={['#f0e5f0', 10, 35]} />
 
-      {/* Lighting — warm and bright */}
-      <ambientLight intensity={0.7} color="#fff8fa" />
-      <directionalLight position={[5, 8, 8]} intensity={0.9} color="#ffe8f0" />
-      <directionalLight position={[-4, 6, -3]} intensity={0.4} color="#e0d0f0" />
+      {/* Warm bright lighting */}
+      <ambientLight intensity={0.65} color="#fff8fa" />
+      <directionalLight position={[4, 8, 6]} intensity={0.9} color="#ffe8f0" />
+      <directionalLight position={[-3, 5, -4]} intensity={0.35} color="#e0d0f0" />
       <hemisphereLight color="#ffe0f0" groundColor="#c0d8f0" intensity={0.3} />
 
+      {/* Sun glow */}
+      <pointLight position={[2, 6, -2]} color="#fff0e0" intensity={1.5} distance={15} decay={2} />
+
       {/* The plum blossom tree */}
-      <BlossomTree currentSection={currentSection} totalSections={totalSections} />
+      <PlumBlossomTree currentSection={currentSection} totalSections={totalSections} />
 
-      {/* Water stream at tree base */}
-      <WaterStream />
-      <WaterSparkles />
+      {/* Flowing water */}
+      <FlowingWater />
 
-      {/* Wind burst petals on transition */}
+      {/* Wind burst on transition */}
       <WindBurstPetals active={isTransitioning} />
 
       {/* Ambient falling petals */}
-      {petals.map((petal, i) => (
-        <FallingPetal key={i} {...petal} />
-      ))}
+      <FallingPetals />
 
-      {/* Soft background particles */}
+      {/* Soft particles */}
       <SoftParticles />
 
       <ReactiveCamera currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
@@ -420,7 +578,7 @@ const Scene3D: React.FC<SceneProps> = ({ currentSection, totalSections, isTransi
   return (
     <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
       <Canvas
-        camera={{ position: [0, 0, 6], fov: 60, near: 0.1, far: 80 }}
+        camera={{ position: [0, 0.5, 6.5], fov: 55, near: 0.1, far: 80 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: 'transparent' }}
       >
