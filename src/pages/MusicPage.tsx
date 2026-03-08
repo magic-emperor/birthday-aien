@@ -18,6 +18,7 @@ const MusicPage: React.FC = () => {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [error, setError] = useState('');
 
   const handlePaste = useCallback(() => {
@@ -80,7 +81,7 @@ const MusicPage: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex gap-2 mb-6"
+          className="flex gap-2 mb-4"
         >
           <input
             type="text"
@@ -98,6 +99,32 @@ const MusicPage: React.FC = () => {
           </button>
         </motion.div>
 
+        {/* Video / Audio toggle */}
+        {currentVideoId && (
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <button
+              onClick={() => setIsAudioOnly(false)}
+              className={`px-4 py-2 rounded-full text-xs font-body transition-all ${
+                !isAudioOnly
+                  ? 'bg-white/20 text-white border border-white/20'
+                  : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'
+              }`}
+            >
+              🎬 Video
+            </button>
+            <button
+              onClick={() => setIsAudioOnly(true)}
+              className={`px-4 py-2 rounded-full text-xs font-body transition-all ${
+                isAudioOnly
+                  ? 'bg-white/20 text-white border border-white/20'
+                  : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'
+              }`}
+            >
+              🎧 Audio Only
+            </button>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <p className="text-sm text-red-400/80 mb-4 font-body">{error}</p>
@@ -107,21 +134,47 @@ const MusicPage: React.FC = () => {
         <AnimatePresence mode="wait">
           {currentVideoId && (
             <motion.div
-              key={currentVideoId}
+              key={currentVideoId + (isAudioOnly ? '-audio' : '-video')}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40"
+              className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40 ${
+                isAudioOnly ? 'max-w-md mx-auto' : ''
+              }`}
             >
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&rel=0`}
-                  title="YouTube player"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
+              {isAudioOnly ? (
+                /* Audio-only: tiny iframe hidden behind a visual */
+                <div className="relative flex flex-col items-center py-10 px-6 bg-white/5">
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    className="text-7xl mb-6"
+                  >
+                    🎧
+                  </motion.div>
+                  <p className="text-white/60 font-body text-sm mb-4">Now playing — audio only</p>
+                  <div className="w-full overflow-hidden rounded-lg" style={{ height: 80 }}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&rel=0`}
+                      title="YouTube audio"
+                      allow="autoplay; encrypted-media"
+                      className="w-full border-0"
+                      style={{ height: 200, marginTop: -60 }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* Full video */
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&rel=0`}
+                    title="YouTube player"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
