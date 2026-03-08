@@ -1137,20 +1137,20 @@ const KoiFish: React.FC = () => {
   );
 };
 
-// ===== SHOOTING STARS =====
-const ShootingStars: React.FC = () => {
+// ===== SHOOTING STARS (night only) =====
+const ShootingStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const STAR_COUNT = 3;
+  const STAR_COUNT = 5;
 
   const stars = useMemo(() =>
     Array.from({ length: STAR_COUNT }, (_, i) => ({
-      interval: 8 + hash(i * 3.1) * 12, // seconds between appearances
-      duration: 0.8 + hash(i * 5.3) * 0.6,
-      startX: -40 + hash(i * 7.7) * 30,
-      startY: 18 + hash(i * 9.1) * 12,
-      startZ: -140 + hash(i * 11.3) * 40,
-      dx: 30 + hash(i * 13.7) * 20,
-      dy: -(8 + hash(i * 15.1) * 6),
+      interval: 6 + hash(i * 3.1) * 10,
+      duration: 0.6 + hash(i * 5.3) * 0.5,
+      startX: -50 + hash(i * 7.7) * 40,
+      startY: 40 + hash(i * 9.1) * 30,
+      startZ: -160 + hash(i * 11.3) * 40,
+      dx: 40 + hash(i * 13.7) * 30,
+      dy: -(12 + hash(i * 15.1) * 8),
       offset: hash(i * 17.3) * 20,
     })), []
   );
@@ -1160,7 +1160,10 @@ const ShootingStars: React.FC = () => {
     const t = clock.elapsedTime;
     groupRef.current.children.forEach((child, i) => {
       const s = stars[i];
-      if (!s) return;
+      if (!s || !isNight) {
+        child.visible = false;
+        return;
+      }
       const cycle = (t + s.offset) % s.interval;
       const progress = cycle / s.duration;
 
@@ -1169,10 +1172,10 @@ const ShootingStars: React.FC = () => {
         child.position.x = s.startX + s.dx * progress;
         child.position.y = s.startY + s.dy * progress;
         child.position.z = s.startZ;
-        const fade = progress < 0.2 ? progress / 0.2 : progress > 0.7 ? (1 - progress) / 0.3 : 1;
-        child.scale.setScalar(0.8 + fade * 0.5);
+        const fade = progress < 0.15 ? progress / 0.15 : progress > 0.6 ? (1 - progress) / 0.4 : 1;
+        child.scale.setScalar(1 + fade * 0.8);
         const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-        mat.opacity = fade * 0.9;
+        mat.opacity = fade * 0.95;
       } else {
         child.visible = false;
       }
@@ -1183,8 +1186,8 @@ const ShootingStars: React.FC = () => {
     <group ref={groupRef}>
       {stars.map((s, i) => (
         <mesh key={i} visible={false}>
-          <sphereGeometry args={[0.15, 6, 6]} />
-          <meshBasicMaterial color={toColor(45, 90, 95)} transparent opacity={0} />
+          <sphereGeometry args={[0.25, 6, 6]} />
+          <meshBasicMaterial color={toColor(45, 80, 98)} transparent opacity={0} />
         </mesh>
       ))}
     </group>
