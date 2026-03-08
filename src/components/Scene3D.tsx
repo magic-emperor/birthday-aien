@@ -267,7 +267,7 @@ const MountainRange: React.FC = () => (
 // ===== DENSE GRASS FIELD using InstancedMesh for performance =====
 const GrassField: React.FC = () => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const BLADE_COUNT = 25000;
+  const BLADE_COUNT = 50000;
   const ANIMATED_COUNT = 4000;
 
   const { matrix, bladeData } = useMemo(() => {
