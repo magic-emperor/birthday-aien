@@ -1037,19 +1037,19 @@ const AtmosphericMist: React.FC = () => (
   </group>
 );
 
-// ===== FIREFLIES =====
-const Fireflies: React.FC = () => {
+// ===== FIREFLIES (night only) =====
+const Fireflies: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const COUNT = 40;
+  const COUNT = 60;
 
   const flies = useMemo(() =>
     Array.from({ length: COUNT }, (_, i) => ({
-      x: (hash(i * 3.1) - 0.5) * 60,
-      y: -1.5 + hash(i * 5.3) * 4,
+      x: (hash(i * 3.1) - 0.5) * 80,
+      y: -1 + hash(i * 5.3) * 6,
       z: -140 + hash(i * 7.7) * 180,
       speed: 0.3 + hash(i * 9.1) * 0.6,
       phase: hash(i * 11.3) * Math.PI * 2,
-      drift: 0.5 + hash(i * 13.7) * 1.5,
+      drift: 0.5 + hash(i * 13.7) * 2,
       pulseSpeed: 1.5 + hash(i * 15.1) * 2,
     })), []
   );
@@ -1061,11 +1061,11 @@ const Fireflies: React.FC = () => {
       const f = flies[i];
       if (!f) return;
       child.position.x = f.x + Math.sin(t * f.speed + f.phase) * f.drift;
-      child.position.y = f.y + Math.sin(t * f.speed * 1.3 + f.phase * 0.7) * 0.6;
+      child.position.y = f.y + Math.sin(t * f.speed * 1.3 + f.phase * 0.7) * 0.8;
       child.position.z = f.z + Math.cos(t * f.speed * 0.8 + f.phase * 1.2) * f.drift * 0.5;
-      const glow = 0.3 + Math.sin(t * f.pulseSpeed + f.phase) * 0.7;
+      const glow = 0.5 + Math.sin(t * f.pulseSpeed + f.phase) * 0.5;
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      mat.opacity = Math.max(0.1, glow);
+      mat.opacity = isNight ? Math.max(0.2, glow) : 0;
     });
   });
 
@@ -1073,8 +1073,8 @@ const Fireflies: React.FC = () => {
     <group ref={groupRef}>
       {flies.map((f, i) => (
         <mesh key={i} position={[f.x, f.y, f.z]}>
-          <sphereGeometry args={[0.06, 6, 6]} />
-          <meshBasicMaterial color={toColor(55, 100, 70)} transparent opacity={0.6} />
+          <sphereGeometry args={[0.12, 6, 6]} />
+          <meshBasicMaterial color={toColor(50, 100, 75)} transparent opacity={0} />
         </mesh>
       ))}
     </group>
@@ -1137,20 +1137,20 @@ const KoiFish: React.FC = () => {
   );
 };
 
-// ===== SHOOTING STARS =====
-const ShootingStars: React.FC = () => {
+// ===== SHOOTING STARS (night only) =====
+const ShootingStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const STAR_COUNT = 3;
+  const STAR_COUNT = 5;
 
   const stars = useMemo(() =>
     Array.from({ length: STAR_COUNT }, (_, i) => ({
-      interval: 8 + hash(i * 3.1) * 12, // seconds between appearances
-      duration: 0.8 + hash(i * 5.3) * 0.6,
-      startX: -40 + hash(i * 7.7) * 30,
-      startY: 18 + hash(i * 9.1) * 12,
-      startZ: -140 + hash(i * 11.3) * 40,
-      dx: 30 + hash(i * 13.7) * 20,
-      dy: -(8 + hash(i * 15.1) * 6),
+      interval: 6 + hash(i * 3.1) * 10,
+      duration: 0.6 + hash(i * 5.3) * 0.5,
+      startX: -50 + hash(i * 7.7) * 40,
+      startY: 40 + hash(i * 9.1) * 30,
+      startZ: -160 + hash(i * 11.3) * 40,
+      dx: 40 + hash(i * 13.7) * 30,
+      dy: -(12 + hash(i * 15.1) * 8),
       offset: hash(i * 17.3) * 20,
     })), []
   );
@@ -1160,7 +1160,10 @@ const ShootingStars: React.FC = () => {
     const t = clock.elapsedTime;
     groupRef.current.children.forEach((child, i) => {
       const s = stars[i];
-      if (!s) return;
+      if (!s || !isNight) {
+        child.visible = false;
+        return;
+      }
       const cycle = (t + s.offset) % s.interval;
       const progress = cycle / s.duration;
 
@@ -1169,10 +1172,10 @@ const ShootingStars: React.FC = () => {
         child.position.x = s.startX + s.dx * progress;
         child.position.y = s.startY + s.dy * progress;
         child.position.z = s.startZ;
-        const fade = progress < 0.2 ? progress / 0.2 : progress > 0.7 ? (1 - progress) / 0.3 : 1;
-        child.scale.setScalar(0.8 + fade * 0.5);
+        const fade = progress < 0.15 ? progress / 0.15 : progress > 0.6 ? (1 - progress) / 0.4 : 1;
+        child.scale.setScalar(1 + fade * 0.8);
         const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-        mat.opacity = fade * 0.9;
+        mat.opacity = fade * 0.95;
       } else {
         child.visible = false;
       }
@@ -1183,8 +1186,8 @@ const ShootingStars: React.FC = () => {
     <group ref={groupRef}>
       {stars.map((s, i) => (
         <mesh key={i} visible={false}>
-          <sphereGeometry args={[0.15, 6, 6]} />
-          <meshBasicMaterial color={toColor(45, 90, 95)} transparent opacity={0} />
+          <sphereGeometry args={[0.25, 6, 6]} />
+          <meshBasicMaterial color={toColor(45, 80, 98)} transparent opacity={0} />
         </mesh>
       ))}
     </group>
@@ -1222,11 +1225,11 @@ const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, i
 const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
   const stars = useMemo(() =>
-    Array.from({ length: 120 }, (_, i) => ({
-      x: (hash(i * 2.3) - 0.5) * 300,
-      y: 30 + hash(i * 4.7) * 100,
-      z: -180 + hash(i * 6.1) * 100,
-      size: 0.1 + hash(i * 8.3) * 0.2,
+    Array.from({ length: 250 }, (_, i) => ({
+      x: (hash(i * 2.3) - 0.5) * 350,
+      y: 25 + hash(i * 4.7) * 130,
+      z: -190 + hash(i * 6.1) * 80,
+      size: 0.12 + hash(i * 8.3) * 0.35,
       twinkleSpeed: 1 + hash(i * 10.7) * 3,
       phase: hash(i * 12.1) * Math.PI * 2,
     })), []
@@ -1239,8 +1242,8 @@ const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
       const s = stars[i];
       if (!s) return;
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      const targetOpacity = isNight ? (0.4 + Math.sin(t * s.twinkleSpeed + s.phase) * 0.6) : 0;
-      mat.opacity += (targetOpacity - mat.opacity) * 0.05;
+      const targetOpacity = isNight ? (0.5 + Math.sin(t * s.twinkleSpeed + s.phase) * 0.5) : 0;
+      mat.opacity += (targetOpacity - mat.opacity) * 0.08;
     });
   });
 
@@ -1249,7 +1252,7 @@ const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
       {stars.map((s, i) => (
         <mesh key={i} position={[s.x, s.y, s.z]}>
           <sphereGeometry args={[s.size, 4, 4]} />
-          <meshBasicMaterial color={toColor(45, 20, 95)} transparent opacity={0} />
+          <meshBasicMaterial color={toColor(45, 15, 98)} transparent opacity={0} />
         </mesh>
       ))}
     </group>
@@ -1264,23 +1267,23 @@ const MoonGlow: React.FC<{ isNight: boolean }> = ({ isNight }) => {
     const targetOpacity = isNight ? 1 : 0;
     groupRef.current.children.forEach(child => {
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      mat.opacity += (targetOpacity * (mat.userData.baseOpacity || 0.8) - mat.opacity) * 0.03;
+      mat.opacity += (targetOpacity * (mat.userData.baseOpacity || 0.9) - mat.opacity) * 0.06;
     });
   });
 
   return (
-    <group ref={groupRef} position={[-25, 30, -140]}>
+    <group ref={groupRef} position={[-30, 45, -160]}>
       <mesh>
-        <circleGeometry args={[4, 32]} />
-        <meshBasicMaterial color={toColor(45, 10, 92)} transparent opacity={0} userData={{ baseOpacity: 0.9 }} />
+        <circleGeometry args={[6, 32]} />
+        <meshBasicMaterial color={toColor(45, 8, 95)} transparent opacity={0} userData={{ baseOpacity: 0.95 }} />
       </mesh>
       <mesh>
-        <circleGeometry args={[8, 32]} />
-        <meshBasicMaterial color={toColor(45, 15, 85)} transparent opacity={0} userData={{ baseOpacity: 0.15 }} />
+        <circleGeometry args={[12, 32]} />
+        <meshBasicMaterial color={toColor(45, 12, 88)} transparent opacity={0} userData={{ baseOpacity: 0.2 }} />
       </mesh>
       <mesh>
-        <circleGeometry args={[14, 32]} />
-        <meshBasicMaterial color={toColor(220, 20, 70)} transparent opacity={0} userData={{ baseOpacity: 0.06 }} />
+        <circleGeometry args={[20, 32]} />
+        <meshBasicMaterial color={toColor(220, 15, 75)} transparent opacity={0} userData={{ baseOpacity: 0.08 }} />
       </mesh>
     </group>
   );
@@ -1310,9 +1313,9 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
       <FlowingRiver />
       <TreeRows />
       <AtmosphericMist />
-      <Fireflies />
+      <Fireflies isNight={isNight} />
       <KoiFish />
-      <ShootingStars />
+      <ShootingStars isNight={isNight} />
       <WindPetals isTransitioning={isTransitioning} petalTexture={petalTexture} />
 
       <ReactiveCamera currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
