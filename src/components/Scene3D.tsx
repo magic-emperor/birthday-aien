@@ -656,7 +656,7 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
       <MountainRange />
       <RiverBanks />
       <FlowingRiver />
-      <TreeRows leafTexture={leafTexture} />
+      {/* Trees removed - using SVG overlay */}
       <AtmosphericMist />
       <WindPetals isTransitioning={isTransitioning} petalTexture={petalTexture} />
 

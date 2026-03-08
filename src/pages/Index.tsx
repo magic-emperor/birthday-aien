@@ -176,6 +176,11 @@ const Index = () => {
       {/* 3D Background — always visible */}
       <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
 
+      {/* SVG Plum Blossom Tree overlay */}
+      <div className="fixed inset-0 z-[5] pointer-events-none">
+        <PlumBlossomTree />
+      </div>
+
       {/* Main content layer */}
       <div className="fixed inset-0 z-10" style={{ perspective: '1200px' }}>
         <AnimatePresence mode="wait">

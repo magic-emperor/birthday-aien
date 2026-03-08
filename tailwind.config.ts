@@ -60,6 +60,8 @@ export default {
           deep: "hsl(var(--sunset-deep))",
           warm: "hsl(var(--sunset-warm))",
         },
+        "sky-mist": "hsl(var(--sky-mist))",
+        moss: "hsl(var(--moss))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
