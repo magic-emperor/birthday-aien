@@ -157,6 +157,7 @@
     transform: translateY(108vh) translateX(calc(var(--drift) * 0.3)) rotate(var(--rotate)) scale(0.8);
     opacity: 0;
   }
+}
 
 @keyframes branch-sway-left {
   0%, 100% { transform: rotate(0deg); }
