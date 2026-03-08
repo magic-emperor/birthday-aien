@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import PlumBlossomTree from '@/components/PlumBlossomTree';
+import Scene3D from '@/components/Scene3D';
 import HeroSection from '@/components/HeroSection';
 import JourneySection from '@/components/JourneySection';
 import GallerySection from '@/components/GallerySection';
