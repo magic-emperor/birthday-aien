@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Scene3D from '@/components/Scene3D';
 import PlumBlossomTree from '@/components/PlumBlossomTree';
 import HeroSection from '@/components/HeroSection';
 import JourneySection from '@/components/JourneySection';
@@ -171,19 +170,35 @@ const Index = () => {
     },
   };
 
+  // CSS 3D transforms for tree based on current section
+  const treeTransform = useMemo(() => {
+    const progress = currentSection / (SECTIONS.length - 1);
+    const rotateY = -15 + progress * 30; // rotate from -15 to 15 degrees
+    const rotateX = 5 - progress * 10; // tilt slightly
+    const scale = 1.1 + Math.sin(progress * Math.PI) * 0.15; // breathe effect
+    const translateY = -5 + progress * 10; // drift up slightly
+    return {
+      transform: `perspective(1200px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(${scale}) translateY(${translateY}%)`,
+      transition: 'transform 1.8s cubic-bezier(0.22, 1, 0.36, 1)',
+    };
+  }, [currentSection]);
+
   return (
     <>
-      {/* 3D Background — always visible */}
-      <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
-
-      {/* SVG Plum Blossom Trees on left and right sides */}
-      <div className="fixed inset-0 z-[5] pointer-events-none overflow-hidden">
-        {/* Left tree */}
-        <div className="absolute left-[-18%] bottom-0 h-full w-[45%]">
-          <PlumBlossomTree />
+      {/* Full-screen SVG Plum Blossom Tree background with 3D rotation */}
+      <div className="fixed inset-0 z-0 overflow-hidden bg-gradient-to-b from-[hsl(210,40%,92%)] via-background to-muted">
+        {/* Misty mountains in background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute bottom-[20%] left-[-10%] right-[-10%] h-[50%] bg-gradient-to-t from-[hsl(120,25%,32%/0.3)] to-transparent rounded-[50%_50%_0_0] scale-x-150" />
+          <div className="absolute bottom-[28%] left-[5%] right-[15%] h-[40%] bg-gradient-to-t from-muted-foreground/10 to-transparent rounded-[50%_50%_0_0]" />
+          <div className="absolute bottom-[35%] left-[20%] right-[0%] h-[35%] bg-gradient-to-t from-muted-foreground/8 to-transparent rounded-[50%_50%_0_0]" />
         </div>
-        {/* Right tree - mirrored */}
-        <div className="absolute right-[-18%] bottom-0 h-full w-[45%]" style={{ transform: 'scaleX(-1)' }}>
+        {/* Ground */}
+        <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-[hsl(120,25%,32%/0.5)] via-[hsl(120,25%,32%/0.3)] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[8%] bg-gradient-to-t from-[hsl(120,25%,32%/0.6)] to-[hsl(120,25%,32%/0.3)]" />
+        
+        {/* The tree with 3D CSS rotation */}
+        <div style={treeTransform} className="absolute inset-0">
           <PlumBlossomTree />
         </div>
       </div>
@@ -201,7 +216,7 @@ const Index = () => {
             style={{ transformStyle: 'preserve-3d' }}
           >
             {/* Semi-transparent backdrop so scene is visible but text remains clear */}
-            <div className="absolute inset-0 bg-background/78 backdrop-blur-md" />
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
 
             {/* Scrollable content container */}
             <div
