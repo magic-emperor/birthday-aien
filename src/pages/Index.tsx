@@ -251,6 +251,26 @@ const Index = () => {
         ))}
       </div>
 
+      {/* Day/Night toggle */}
+      <button
+        onClick={() => setIsNight(n => !n)}
+        className="fixed top-6 right-6 z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label={isNight ? 'Switch to day' : 'Switch to night'}
+        style={{ pointerEvents: 'auto' }}
+      >
+        {isNight ? '☀️' : '🌙'}
+      </button>
+
+      {/* Zen Garden link */}
+      <a
+        href="/zen-garden"
+        className="fixed top-6 right-20 z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label="Zen Garden"
+        style={{ pointerEvents: 'auto' }}
+      >
+        🪨
+      </a>
+
       {/* Scroll hint */}
       {currentSection === 0 && !isTransitioning && (
         <motion.div
