@@ -70,7 +70,9 @@ const createSoftSpriteTexture = ({
   return texture;
 };
 
-const SkyDome: React.FC = () => {
+const SkyDome: React.FC<{ isNight: boolean }> = ({ isNight }) => {
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -105,6 +107,26 @@ const SkyDome: React.FC = () => {
       }),
     []
   );
+
+  useFrame(() => {
+    if (!material) return;
+    const dayTop = toColor(207, 72, 67);
+    const dayMid = toColor(205, 68, 77);
+    const dayBot = toColor(194, 56, 88);
+    const nightTop = toColor(230, 60, 8);
+    const nightMid = toColor(225, 50, 15);
+    const nightBot = toColor(220, 40, 22);
+    const speed = 0.03;
+    if (isNight) {
+      material.uniforms.topColor.value.lerp(nightTop, speed);
+      material.uniforms.midColor.value.lerp(nightMid, speed);
+      material.uniforms.bottomColor.value.lerp(nightBot, speed);
+    } else {
+      material.uniforms.topColor.value.lerp(dayTop, speed);
+      material.uniforms.midColor.value.lerp(dayMid, speed);
+      material.uniforms.bottomColor.value.lerp(dayBot, speed);
+    }
+  });
 
   return (
     <mesh>
