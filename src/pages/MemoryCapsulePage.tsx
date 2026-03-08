@@ -1,50 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Capsule {
   id: string;
   title: string;
   message: string;
-  unlockDate: string; // ISO date string
-  createdAt: string;
   emoji: string;
-}
-
-const STORAGE_KEY = 'memory-capsules';
-
-function loadCapsules(): Capsule[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : getDefaultCapsules();
-  } catch { return getDefaultCapsules(); }
-}
-
-function saveCapsules(capsules: Capsule[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(capsules));
-}
-
-function getDefaultCapsules(): Capsule[] {
-  const now = new Date();
-  return [
-    {
-      id: '1',
-      title: 'For Your Next Birthday 🎂',
-      message: 'Write something beautiful here that she\'ll read on her next birthday...',
-      unlockDate: new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString(),
-      createdAt: now.toISOString(),
-      emoji: '🎂',
-    },
-    {
-      id: '2',
-      title: 'Our Anniversary Note 💕',
-      message: 'This letter is sealed until our anniversary...',
-      unlockDate: new Date(now.getFullYear(), now.getMonth() + 3, 1).toISOString(),
-      createdAt: now.toISOString(),
-      emoji: '💕',
-    },
-  ];
+  unlock_date: string;
+  created_at: string;
 }
 
 function isUnlocked(unlockDate: string): boolean {
@@ -56,9 +22,12 @@ function daysUntil(unlockDate: string): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
+const EMOJIS = ['💌', '🎂', '💕', '🌟', '🎁', '🌙', '✨', '🦋'];
+
 const MemoryCapsulePage: React.FC = () => {
   const navigate = useNavigate();
-  const [capsules, setCapsules] = useState<Capsule[]>(loadCapsules);
+  const [capsules, setCapsules] = useState<Capsule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [openCapsuleId, setOpenCapsuleId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
@@ -66,33 +35,36 @@ const MemoryCapsulePage: React.FC = () => {
   const [newDate, setNewDate] = useState('');
   const [newEmoji, setNewEmoji] = useState('💌');
 
-  const EMOJIS = ['💌', '🎂', '💕', '🌟', '🎁', '🌙', '✨', '🦋'];
+  const fetchCapsules = async () => {
+    const { data } = await supabase
+      .from('memory_capsules')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setCapsules(data as Capsule[]);
+    setLoading(false);
+  };
 
-  const update = useCallback((updated: Capsule[]) => {
-    setCapsules(updated);
-    saveCapsules(updated);
-  }, []);
+  useEffect(() => { fetchCapsules(); }, []);
 
-  const createCapsule = () => {
+  const createCapsule = async () => {
     if (!newTitle.trim() || !newMessage.trim() || !newDate) return;
-    const capsule: Capsule = {
-      id: Date.now().toString(),
+    await supabase.from('memory_capsules').insert({
       title: newTitle.trim(),
       message: newMessage.trim(),
-      unlockDate: new Date(newDate).toISOString(),
-      createdAt: new Date().toISOString(),
       emoji: newEmoji,
-    };
-    update([capsule, ...capsules]);
+      unlock_date: new Date(newDate).toISOString(),
+    });
     setNewTitle('');
     setNewMessage('');
     setNewDate('');
     setNewEmoji('💌');
     setShowCreate(false);
+    fetchCapsules();
   };
 
-  const deleteCapsule = (id: string) => {
-    update(capsules.filter(c => c.id !== id));
+  const deleteCapsule = async (id: string) => {
+    await supabase.from('memory_capsules').delete().eq('id', id);
+    setCapsules(prev => prev.filter(c => c.id !== id));
   };
 
   const openCapsule = capsules.find(c => c.id === openCapsuleId);
@@ -202,60 +174,66 @@ const MemoryCapsulePage: React.FC = () => {
         </AnimatePresence>
 
         {/* Capsule list */}
-        <div className="grid gap-4">
-          {capsules.map((capsule, i) => {
-            const unlocked = isUnlocked(capsule.unlockDate);
-            const days = daysUntil(capsule.unlockDate);
+        {loading ? (
+          <div className="text-center py-16">
+            <p className="text-white/30 font-body text-sm">Loading capsules...</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {capsules.map((capsule, i) => {
+              const unlocked = isUnlocked(capsule.unlock_date);
+              const days = daysUntil(capsule.unlock_date);
 
-            return (
-              <motion.div
-                key={capsule.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={`group relative p-5 rounded-2xl border transition-all cursor-pointer ${
-                  unlocked
-                    ? 'bg-white/8 border-white/15 hover:bg-white/12'
-                    : 'bg-white/4 border-white/8'
-                }`}
-                onClick={() => unlocked && setOpenCapsuleId(capsule.id)}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`text-3xl ${unlocked ? '' : 'grayscale opacity-50'}`}>
-                    {capsule.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-body font-medium ${unlocked ? 'text-white/90' : 'text-white/50'}`}>
-                      {capsule.title}
-                    </p>
-                    {unlocked ? (
-                      <p className="text-xs text-white/30 font-body mt-1">
-                        🔓 Unlocked — tap to read • Written {format(new Date(capsule.createdAt), 'MMM d, yyyy')}
+              return (
+                <motion.div
+                  key={capsule.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`group relative p-5 rounded-2xl border transition-all cursor-pointer ${
+                    unlocked
+                      ? 'bg-white/8 border-white/15 hover:bg-white/12'
+                      : 'bg-white/4 border-white/8'
+                  }`}
+                  onClick={() => unlocked && setOpenCapsuleId(capsule.id)}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`text-3xl ${unlocked ? '' : 'grayscale opacity-50'}`}>
+                      {capsule.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-body font-medium ${unlocked ? 'text-white/90' : 'text-white/50'}`}>
+                        {capsule.title}
                       </p>
-                    ) : (
-                      <div className="mt-2">
-                        <p className="text-xs text-white/30 font-body">
-                          🔒 Sealed until {format(new Date(capsule.unlockDate), 'MMMM d, yyyy')}
+                      {unlocked ? (
+                        <p className="text-xs text-white/30 font-body mt-1">
+                          🔓 Unlocked — tap to read • Written {format(new Date(capsule.created_at), 'MMM d, yyyy')}
                         </p>
-                        <p className="text-xs text-white/20 font-body mt-0.5">
-                          {days} day{days !== 1 ? 's' : ''} remaining...
-                        </p>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="mt-2">
+                          <p className="text-xs text-white/30 font-body">
+                            🔒 Sealed until {format(new Date(capsule.unlock_date), 'MMMM d, yyyy')}
+                          </p>
+                          <p className="text-xs text-white/20 font-body mt-0.5">
+                            {days} day{days !== 1 ? 's' : ''} remaining...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteCapsule(capsule.id); }}
+                      className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-white/50 text-xs transition-all"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); deleteCapsule(capsule.id); }}
-                    className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-white/50 text-xs transition-all"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-        {capsules.length === 0 && (
+        {!loading && capsules.length === 0 && (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">💌</p>
             <p className="text-white/30 font-body text-sm">No capsules yet — write your first letter!</p>
@@ -284,7 +262,7 @@ const MemoryCapsulePage: React.FC = () => {
                 <span className="text-5xl block mb-3">{openCapsule.emoji}</span>
                 <h2 className="text-xl font-display text-white/90">{openCapsule.title}</h2>
                 <p className="text-xs text-white/30 font-body mt-2">
-                  Written on {format(new Date(openCapsule.createdAt), 'MMMM d, yyyy')}
+                  Written on {format(new Date(openCapsule.created_at), 'MMMM d, yyyy')}
                 </p>
               </div>
               <div className="bg-white/5 rounded-xl p-6 border border-white/10">
