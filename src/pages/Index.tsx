@@ -176,9 +176,16 @@ const Index = () => {
       {/* 3D Background — always visible */}
       <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
 
-      {/* SVG Plum Blossom Tree overlay */}
-      <div className="fixed inset-0 z-[5] pointer-events-none">
-        <PlumBlossomTree />
+      {/* SVG Plum Blossom Trees on left and right sides */}
+      <div className="fixed inset-0 z-[5] pointer-events-none overflow-hidden">
+        {/* Left tree */}
+        <div className="absolute left-[-18%] bottom-0 h-full w-[45%]">
+          <PlumBlossomTree />
+        </div>
+        {/* Right tree - mirrored */}
+        <div className="absolute right-[-18%] bottom-0 h-full w-[45%]" style={{ transform: 'scaleX(-1)' }}>
+          <PlumBlossomTree />
+        </div>
       </div>
 
       {/* Main content layer */}
