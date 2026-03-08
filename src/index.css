@@ -180,3 +180,18 @@
 .animate-gentle-bounce {
   animation: gentle-bounce 2s ease-in-out infinite;
 }
+
+.branch-sway-left {
+  transform-origin: 250px 350px;
+  animation: branch-sway-left 5s ease-in-out infinite;
+}
+
+.branch-sway-right {
+  transform-origin: 250px 340px;
+  animation: branch-sway-right 5.5s ease-in-out infinite;
+}
+
+.branch-sway-top {
+  transform-origin: 250px 220px;
+  animation: branch-sway-top 7s ease-in-out infinite;
+}
