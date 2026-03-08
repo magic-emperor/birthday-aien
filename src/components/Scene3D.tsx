@@ -995,6 +995,7 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
       <CloudField cloudTexture={cloudTexture} />
       <MountainRange />
       <RiverBanks />
+      <GrassField />
       <FlowingRiver />
       <TreeRows />
       <AtmosphericMist />
