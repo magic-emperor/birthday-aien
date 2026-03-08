@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import CountdownTimer from './CountdownTimer';
 
 const HeroSection: React.FC = () => {
@@ -8,10 +8,7 @@ const HeroSection: React.FC = () => {
       {/* Radial glow */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.05, 0.12, 0.05],
-          }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.12, 0.05] }}
           transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
           className="w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]"
         />
@@ -78,22 +75,6 @@ const HeroSection: React.FC = () => {
         </motion.p>
 
         <CountdownTimer />
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="mt-16"
-        >
-          <p className="text-xs text-muted-foreground/50 uppercase tracking-widest mb-2">Scroll to begin the journey</p>
-          <div className="w-6 h-10 mx-auto rounded-full border-2 border-primary/30 flex items-start justify-center p-1">
-            <motion.div
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-1.5 h-1.5 rounded-full bg-primary/60"
-            />
-          </div>
-        </motion.div>
       </motion.div>
     </section>
   );

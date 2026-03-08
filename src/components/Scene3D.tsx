@@ -1,7 +1,13 @@
 import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Stars } from '@react-three/drei';
 import * as THREE from 'three';
+
+interface SceneProps {
+  currentSection: number;
+  totalSections: number;
+  isTransitioning: boolean;
+}
 
 const Lantern: React.FC<{ position: [number, number, number]; color: string; speed?: number }> = ({ position, color, speed = 1 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -24,33 +30,24 @@ const Lantern: React.FC<{ position: [number, number, number]; color: string; spe
   );
 };
 
-// Tunnel-like particles that streak past as camera moves forward
-const TunnelParticles: React.FC = () => {
+const DriftingParticles: React.FC = () => {
   const ref = useRef<THREE.Points>(null);
 
-  const { positions, sizes } = useMemo(() => {
-    const count = 600;
+  const positions = useMemo(() => {
+    const count = 400;
     const pos = new Float32Array(count * 3);
-    const sz = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      // Spread in a cylinder around the Z-axis (the travel path)
-      const angle = Math.random() * Math.PI * 2;
-      const radius = 2 + Math.random() * 8;
-      pos[i * 3] = Math.cos(angle) * radius;
-      pos[i * 3 + 1] = Math.sin(angle) * radius;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 100; // spread along Z
-      sz[i] = 0.02 + Math.random() * 0.04;
+      pos[i * 3] = (Math.random() - 0.5) * 20;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
     }
-    return { positions: pos, sizes: sz };
+    return pos;
   }, []);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (ref.current) {
-      // Move with scroll to create parallax — camera moves forward, particles stay
-      const scrollY = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = scrollY / maxScroll;
-      ref.current.position.z = progress * 50;
+      ref.current.rotation.y = clock.elapsedTime * 0.02;
+      ref.current.rotation.x = Math.sin(clock.elapsedTime * 0.01) * 0.1;
     }
   });
 
@@ -59,47 +56,55 @@ const TunnelParticles: React.FC = () => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} color="hsl(25, 90%, 58%)" transparent opacity={0.3} sizeAttenuation />
+      <pointsMaterial size={0.04} color="hsl(25, 90%, 58%)" transparent opacity={0.25} sizeAttenuation />
     </points>
   );
 };
 
-// Camera that moves FORWARD (along Z) with scroll
-const ScrollCamera: React.FC = () => {
-  const { camera } = useThree();
-  const targetZ = useRef(0);
+// Camera that reacts to section changes with smooth movement
+const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; isTransitioning: boolean }> = ({ currentSection, totalSections, isTransitioning }) => {
+  const targetPos = useRef(new THREE.Vector3(0, 0, 5));
+  const targetLook = useRef(new THREE.Vector3(0, 0, 0));
 
-  useFrame(() => {
-    const scrollY = window.scrollY;
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = Math.min(scrollY / maxScroll, 1);
+  useFrame(({ camera, clock }) => {
+    const t = clock.elapsedTime;
+    const progress = currentSection / (totalSections - 1);
 
-    // Camera flies forward along Z
-    targetZ.current = progress * 60;
-    camera.position.z += (targetZ.current - camera.position.z) * 0.03;
+    // Camera spirals gently based on current section
+    const angle = progress * Math.PI * 2;
+    targetPos.current.set(
+      Math.sin(angle) * 2 + Math.sin(t * 0.2) * 0.3,
+      Math.cos(angle * 0.5) * 1.5 + Math.cos(t * 0.15) * 0.2,
+      5 - progress * 3
+    );
 
-    // Subtle sway
-    camera.position.x = Math.sin(progress * Math.PI * 2) * 0.5;
-    camera.position.y = Math.cos(progress * Math.PI * 3) * 0.3;
-
-    camera.lookAt(camera.position.x * 0.5, 0, camera.position.z + 10);
+    // Smooth lerp
+    const speed = isTransitioning ? 0.02 : 0.01;
+    camera.position.lerp(targetPos.current, speed);
+    
+    targetLook.current.set(
+      Math.sin(t * 0.1) * 0.5,
+      Math.cos(t * 0.08) * 0.3,
+      0
+    );
+    camera.lookAt(targetLook.current);
   });
 
   return null;
 };
 
-const SceneContent: React.FC = () => {
+const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const lanterns = useMemo(() => {
     const items: { position: [number, number, number]; color: string; speed: number }[] = [];
     const colors = ['#d4732a', '#c44a6e', '#d4a030', '#e88a5a', '#b84060'];
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 20; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = 3 + Math.random() * 6;
       items.push({
         position: [
           Math.cos(angle) * radius,
-          (Math.random() - 0.5) * 5,
-          i * 1.8, // spread along Z (the travel path)
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 10,
         ],
         color: colors[i % colors.length],
         speed: 0.5 + Math.random() * 1.5,
@@ -110,31 +115,31 @@ const SceneContent: React.FC = () => {
 
   return (
     <>
-      <fog attach="fog" args={['hsl(30, 40%, 6%)', 3, 30]} />
+      <fog attach="fog" args={['hsl(30, 40%, 6%)', 5, 25]} />
       <ambientLight intensity={0.1} />
       <directionalLight position={[5, 5, 10]} intensity={0.2} color="#d4732a" />
 
-      <Stars radius={40} depth={60} count={3000} factor={2.5} saturation={0.3} fade speed={0.3} />
-      <TunnelParticles />
+      <Stars radius={30} depth={50} count={2000} factor={2.5} saturation={0.3} fade speed={0.3} />
+      <DriftingParticles />
 
       {lanterns.map((lantern, i) => (
         <Lantern key={i} {...lantern} />
       ))}
 
-      <ScrollCamera />
+      <ReactiveCamera currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
     </>
   );
 };
 
-const Scene3D: React.FC = () => {
+const Scene3D: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   return (
     <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
       <Canvas
-        camera={{ position: [0, 0, 0], fov: 65, near: 0.1, far: 120 }}
+        camera={{ position: [0, 0, 5], fov: 65, near: 0.1, far: 80 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: 'transparent' }}
       >
-        <SceneContent />
+        <SceneContent currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
       </Canvas>
     </div>
   );

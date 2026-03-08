@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Scene3D from '@/components/Scene3D';
 import HeroSection from '@/components/HeroSection';
 import JourneySection from '@/components/JourneySection';
@@ -7,173 +7,264 @@ import GallerySection from '@/components/GallerySection';
 import AdventureSection from '@/components/AdventureSection';
 import BlockBreakerGame from '@/components/BlockBreakerGame';
 
-const Index = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: containerRef });
-  
-  // Smooth spring-based scroll progress
-  const smoothProgress = useSpring(scrollYProgress, { 
-    stiffness: 50, 
-    damping: 20, 
-    mass: 0.5 
-  });
+const SECTIONS = [
+  { id: 'hero', Component: HeroSection, label: 'Welcome' },
+  { id: 'journey', Component: JourneySection, label: 'Memories' },
+  { id: 'gallery', Component: GallerySection, label: 'Gallery' },
+  { id: 'adventure', Component: AdventureSection, label: 'Adventure' },
+  { id: 'game', Component: BlockBreakerGame, label: 'Game' },
+];
 
-  // The entire world moves FORWARD in Z as you scroll
-  const worldZ = useTransform(smoothProgress, [0, 1], [0, 8000]);
-  // Slight rotation as you travel
-  const worldRotateY = useTransform(smoothProgress, [0, 0.3, 0.5, 0.7, 1], [0, -2, 0, 2, 0]);
-  const worldRotateX = useTransform(smoothProgress, [0, 1], [0, -1]);
+const Index = () => {
+  const [currentSection, setCurrentSection] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
+  const sectionContentRef = useRef<HTMLDivElement>(null);
+  const lastScrollTime = useRef(0);
+  const touchStartY = useRef(0);
+
+  const goToSection = useCallback((direction: 'forward' | 'backward') => {
+    if (isTransitioning) return;
+
+    const next = direction === 'forward' ? currentSection + 1 : currentSection - 1;
+    if (next < 0 || next >= SECTIONS.length) return;
+
+    // Check if we should scroll content first
+    const container = sectionContentRef.current;
+    if (container) {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      const atTop = scrollTop <= 10;
+
+      if (direction === 'forward' && !atBottom) return;
+      if (direction === 'backward' && !atTop) return;
+    }
+
+    setTransitionDirection(direction);
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setCurrentSection(next);
+      // Reset scroll of new section
+      if (sectionContentRef.current) {
+        sectionContentRef.current.scrollTop = 0;
+      }
+    }, 400);
+
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 1200);
+  }, [currentSection, isTransitioning]);
+
+  // Wheel handler — navigate sections when content is at boundary
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const now = Date.now();
+      if (now - lastScrollTime.current < 100) return;
+
+      const container = sectionContentRef.current;
+      if (!container) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      const atTop = scrollTop <= 10;
+
+      if (e.deltaY > 30 && atBottom) {
+        lastScrollTime.current = now;
+        goToSection('forward');
+      } else if (e.deltaY < -30 && atTop) {
+        lastScrollTime.current = now;
+        goToSection('backward');
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [goToSection]);
+
+  // Touch handler for mobile
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+      const container = sectionContentRef.current;
+      if (!container) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      const atTop = scrollTop <= 10;
+
+      if (deltaY > 60 && atBottom) {
+        goToSection('forward');
+      } else if (deltaY < -60 && atTop) {
+        goToSection('backward');
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [goToSection]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') goToSection('forward');
+      if (e.key === 'ArrowUp' || e.key === 'PageUp') goToSection('backward');
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [goToSection]);
+
+  const CurrentComponent = SECTIONS[currentSection].Component;
+
+  // 3D transition variants
+  const flyVariants = {
+    enterForward: {
+      opacity: 0,
+      scale: 0.3,
+      z: -800,
+      filter: 'blur(20px)',
+    },
+    enterBackward: {
+      opacity: 0,
+      scale: 2,
+      z: 400,
+      filter: 'blur(20px)',
+    },
+    center: {
+      opacity: 1,
+      scale: 1,
+      z: 0,
+      filter: 'blur(0px)',
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
+    exitForward: {
+      opacity: 0,
+      scale: 2.5,
+      z: 500,
+      filter: 'blur(12px)',
+      transition: {
+        duration: 0.6,
+        ease: [0.7, 0, 0.84, 0],
+      },
+    },
+    exitBackward: {
+      opacity: 0,
+      scale: 0.2,
+      z: -1000,
+      filter: 'blur(12px)',
+      transition: {
+        duration: 0.6,
+        ease: [0.7, 0, 0.84, 0],
+      },
+    },
+  };
 
   return (
     <>
-      {/* 3D Background */}
-      <Scene3D />
+      {/* 3D Background — always visible */}
+      <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
 
-      {/* Scroll spacer — this creates the scrollable height */}
-      <div ref={containerRef} className="relative" style={{ height: '800vh' }}>
-
-        {/* Fixed 3D viewport */}
-        <div 
-          className="fixed inset-0 z-10 overflow-hidden"
-          style={{ 
-            perspective: '1200px',
-            perspectiveOrigin: '50% 50%',
-          }}
-        >
+      {/* Main content layer */}
+      <div className="fixed inset-0 z-10" style={{ perspective: '1200px' }}>
+        <AnimatePresence mode="wait">
           <motion.div
-            style={{
-              translateZ: worldZ,
-              rotateY: worldRotateY,
-              rotateX: worldRotateX,
-              transformStyle: 'preserve-3d',
-              transformOrigin: 'center center',
-            }}
-            className="w-full h-full relative"
+            key={currentSection}
+            variants={flyVariants}
+            initial={transitionDirection === 'forward' ? 'enterForward' : 'enterBackward'}
+            animate="center"
+            exit={transitionDirection === 'forward' ? 'exitForward' : 'exitBackward'}
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* === SECTION 1: Hero — at Z=0 (starting point) === */}
-            <div
-              className="absolute inset-0 w-full h-screen flex items-center justify-center"
-              style={{
-                transform: 'translateZ(0px)',
-                transformStyle: 'preserve-3d',
-              }}
-            >
-              <HeroSection />
-            </div>
+            {/* Solid opaque background per section */}
+            <div className="absolute inset-0 bg-background/95 backdrop-blur-md" />
 
-            {/* === SECTION 2: Journey — placed deeper at Z=-2000 === */}
+            {/* Scrollable content container */}
             <div
-              className="absolute left-0 right-0 flex items-center justify-center"
-              style={{
-                transform: 'translateZ(-1800px) translateY(-50%)',
-                top: '50%',
-                transformStyle: 'preserve-3d',
-              }}
+              ref={sectionContentRef}
+              className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden"
+              style={{ scrollBehavior: 'smooth' }}
             >
-              <div className="w-screen max-w-full px-4">
-                <JourneySection />
+              <div className="min-h-full flex items-center justify-center py-8">
+                <CurrentComponent />
               </div>
-            </div>
 
-            {/* === SECTION 3: Gallery — even deeper at Z=-3500 === */}
-            <div
-              className="absolute left-0 right-0 flex items-center justify-center"
-              style={{
-                transform: 'translateZ(-3500px) translateX(100px) translateY(-50%)',
-                top: '50%',
-                transformStyle: 'preserve-3d',
-              }}
-            >
-              <div className="w-screen max-w-full px-4">
-                <GallerySection />
-              </div>
-            </div>
-
-            {/* === SECTION 4: Adventure — at Z=-5500 === */}
-            <div
-              className="absolute left-0 right-0 flex items-center justify-center"
-              style={{
-                transform: 'translateZ(-5500px) translateX(-100px) translateY(-50%)',
-                top: '50%',
-                transformStyle: 'preserve-3d',
-              }}
-            >
-              <div className="w-screen max-w-full px-4">
-                <AdventureSection />
-              </div>
-            </div>
-
-            {/* === SECTION 5: Game — at Z=-7200 === */}
-            <div
-              className="absolute left-0 right-0 flex items-center justify-center"
-              style={{
-                transform: 'translateZ(-7200px) translateY(-50%)',
-                top: '50%',
-                transformStyle: 'preserve-3d',
-              }}
-            >
-              <div className="w-screen max-w-full px-4">
-                <BlockBreakerGame />
-              </div>
-            </div>
-
-            {/* === Footer — at Z=-8000 === */}
-            <div
-              className="absolute left-0 right-0 flex items-center justify-center"
-              style={{
-                transform: 'translateZ(-7800px) translateY(-50%)',
-                top: '50%',
-              }}
-            >
-              <div className="text-center py-16 px-4">
-                <p className="text-sm text-muted-foreground/50 font-body">
-                  Made with all my heart, for you ♥
-                </p>
-                <p className="text-xs text-muted-foreground/30 mt-2 font-body">
-                  Happy 25th Birthday, Mehnaz 🌙
-                </p>
-              </div>
-            </div>
-
-            {/* Floating 3D decorative elements along the path */}
-            {Array.from({ length: 25 }).map((_, i) => {
-              const z = -i * 350;
-              const x = Math.sin(i * 0.8) * 400;
-              const y = Math.cos(i * 0.6) * 150;
-              return (
-                <div
-                  key={i}
-                  className="absolute text-primary/10"
-                  style={{
-                    transform: `translateZ(${z}px) translateX(${x}px) translateY(${y}px)`,
-                    top: '50%',
-                    left: '50%',
-                    fontSize: `${20 + Math.random() * 30}px`,
-                  }}
-                >
-                  ✦
+              {/* Footer only on last section */}
+              {currentSection === SECTIONS.length - 1 && (
+                <div className="text-center py-16 px-4">
+                  <p className="text-sm text-muted-foreground/50 font-body">
+                    Made with all my heart, for you ♥
+                  </p>
+                  <p className="text-xs text-muted-foreground/30 mt-2 font-body">
+                    Happy 25th Birthday, Mehnaz 🌙
+                  </p>
                 </div>
-              );
-            })}
+              )}
+            </div>
           </motion.div>
-        </div>
+        </AnimatePresence>
+      </div>
 
-        {/* Scroll progress indicator */}
+      {/* Section indicator dots */}
+      <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
+        {SECTIONS.map((section, i) => (
+          <button
+            key={section.id}
+            onClick={() => {
+              if (i === currentSection || isTransitioning) return;
+              setTransitionDirection(i > currentSection ? 'forward' : 'backward');
+              setIsTransitioning(true);
+              setTimeout(() => {
+                setCurrentSection(i);
+                if (sectionContentRef.current) sectionContentRef.current.scrollTop = 0;
+              }, 400);
+              setTimeout(() => setIsTransitioning(false), 1200);
+            }}
+            className="group relative flex items-center"
+            aria-label={section.label}
+          >
+            <span className={`
+              block rounded-full transition-all duration-500
+              ${i === currentSection
+                ? 'w-3 h-3 bg-primary shadow-[0_0_12px_hsl(25_90%_58%/0.6)]'
+                : 'w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/60'}
+            `} />
+            <span className="absolute right-6 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground whitespace-nowrap font-body">
+              {section.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Scroll hint */}
+      {currentSection === 0 && !isTransitioning && (
         <motion.div
-          className="fixed bottom-8 right-8 z-50 flex flex-col items-center gap-2"
-          style={{ opacity: useTransform(smoothProgress, [0, 0.05, 0.95, 1], [0, 1, 1, 0]) }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center"
         >
-          <div className="w-1 h-24 bg-border/30 rounded-full overflow-hidden">
+          <p className="text-xs text-muted-foreground/50 uppercase tracking-widest mb-2 font-body">Scroll to begin</p>
+          <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-1">
             <motion.div
-              className="w-full bg-gradient-to-b from-primary to-accent rounded-full origin-top"
-              style={{ scaleY: smoothProgress }}
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-primary/60"
             />
           </div>
-          <p className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest writing-vertical">
-            scroll
-          </p>
         </motion.div>
-      </div>
+      )}
     </>
   );
 };
