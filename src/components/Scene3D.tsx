@@ -56,7 +56,7 @@ const DriftingParticles: React.FC = () => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.04} color="hsl(25, 90%, 58%)" transparent opacity={0.25} sizeAttenuation />
+      <pointsMaterial size={0.04} color="hsl(200, 70%, 65%)" transparent opacity={0.25} sizeAttenuation />
     </points>
   );
 };
