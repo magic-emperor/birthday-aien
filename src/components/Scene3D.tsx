@@ -1326,7 +1326,7 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
 
       <SkyDome isNight={isNight} />
       {!isNight && <SunAndGlow />}
-      {isNight && <MoonGlow isNight={isNight} />}
+      {isNight && <CrescentMoon isNight={isNight} />}
       {isNight && <NightStars isNight={isNight} />}
       <CloudField cloudTexture={cloudTexture} />
       <MountainRange />
