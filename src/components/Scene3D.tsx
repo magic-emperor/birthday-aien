@@ -347,6 +347,7 @@ const GrassField: React.FC = () => {
   // Create varied green colors per instance
   const colors = useMemo(() => {
     const arr = new Float32Array(BLADE_COUNT * 3);
+    const tempColor = new THREE.Color();
     for (let i = 0; i < BLADE_COUNT; i++) {
       const c = toColor(
         90 + hash(i * 13.7) * 40,
