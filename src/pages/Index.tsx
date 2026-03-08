@@ -197,7 +197,7 @@ const Index = () => {
             {/* Scrollable content container */}
             <div
               ref={sectionContentRef}
-              className="relative z-10 w-full h-full overflow-y-auto overflow-x-hidden"
+              className={`relative z-10 w-full h-full overflow-y-auto overflow-x-hidden ${isNight ? 'night-mode' : ''}`}
               style={{ scrollBehavior: 'smooth' }}
             >
               <div className="min-h-full flex items-center justify-center py-8">
