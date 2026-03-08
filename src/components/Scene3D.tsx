@@ -96,7 +96,7 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
 const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const lanterns = useMemo(() => {
     const items: { position: [number, number, number]; color: string; speed: number }[] = [];
-    const colors = ['#d4732a', '#c44a6e', '#d4a030', '#e88a5a', '#b84060'];
+    const colors = ['#5ba8d4', '#b070c4', '#d470a0', '#70a0d4', '#9080d4'];
     for (let i = 0; i < 20; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = 3 + Math.random() * 6;
