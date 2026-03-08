@@ -6,6 +6,7 @@ interface SceneProps {
   currentSection: number;
   totalSections: number;
   isTransitioning: boolean;
+  isNight?: boolean;
 }
 
 type HslTriplet = [number, number, number];
@@ -69,7 +70,9 @@ const createSoftSpriteTexture = ({
   return texture;
 };
 
-const SkyDome: React.FC = () => {
+const SkyDome: React.FC<{ isNight: boolean }> = ({ isNight }) => {
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -104,6 +107,26 @@ const SkyDome: React.FC = () => {
       }),
     []
   );
+
+  useFrame(() => {
+    if (!material) return;
+    const dayTop = toColor(207, 72, 67);
+    const dayMid = toColor(205, 68, 77);
+    const dayBot = toColor(194, 56, 88);
+    const nightTop = toColor(230, 60, 8);
+    const nightMid = toColor(225, 50, 15);
+    const nightBot = toColor(220, 40, 22);
+    const speed = 0.03;
+    if (isNight) {
+      material.uniforms.topColor.value.lerp(nightTop, speed);
+      material.uniforms.midColor.value.lerp(nightMid, speed);
+      material.uniforms.bottomColor.value.lerp(nightBot, speed);
+    } else {
+      material.uniforms.topColor.value.lerp(dayTop, speed);
+      material.uniforms.midColor.value.lerp(dayMid, speed);
+      material.uniforms.bottomColor.value.lerp(dayBot, speed);
+    }
+  });
 
   return (
     <mesh>
@@ -1196,22 +1219,90 @@ const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, i
   return null;
 };
 
-const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
+const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const stars = useMemo(() =>
+    Array.from({ length: 120 }, (_, i) => ({
+      x: (hash(i * 2.3) - 0.5) * 300,
+      y: 30 + hash(i * 4.7) * 100,
+      z: -180 + hash(i * 6.1) * 100,
+      size: 0.1 + hash(i * 8.3) * 0.2,
+      twinkleSpeed: 1 + hash(i * 10.7) * 3,
+      phase: hash(i * 12.1) * Math.PI * 2,
+    })), []
+  );
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.elapsedTime;
+    groupRef.current.children.forEach((child, i) => {
+      const s = stars[i];
+      if (!s) return;
+      const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      const targetOpacity = isNight ? (0.4 + Math.sin(t * s.twinkleSpeed + s.phase) * 0.6) : 0;
+      mat.opacity += (targetOpacity - mat.opacity) * 0.05;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {stars.map((s, i) => (
+        <mesh key={i} position={[s.x, s.y, s.z]}>
+          <sphereGeometry args={[s.size, 4, 4]} />
+          <meshBasicMaterial color={toColor(45, 20, 95)} transparent opacity={0} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+const MoonGlow: React.FC<{ isNight: boolean }> = ({ isNight }) => {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+    const targetOpacity = isNight ? 1 : 0;
+    groupRef.current.children.forEach(child => {
+      const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      mat.opacity += (targetOpacity * (mat.userData.baseOpacity || 0.8) - mat.opacity) * 0.03;
+    });
+  });
+
+  return (
+    <group ref={groupRef} position={[-25, 30, -140]}>
+      <mesh>
+        <circleGeometry args={[4, 32]} />
+        <meshBasicMaterial color={toColor(45, 10, 92)} transparent opacity={0} userData={{ baseOpacity: 0.9 }} />
+      </mesh>
+      <mesh>
+        <circleGeometry args={[8, 32]} />
+        <meshBasicMaterial color={toColor(45, 15, 85)} transparent opacity={0} userData={{ baseOpacity: 0.15 }} />
+      </mesh>
+      <mesh>
+        <circleGeometry args={[14, 32]} />
+        <meshBasicMaterial color={toColor(220, 20, 70)} transparent opacity={0} userData={{ baseOpacity: 0.06 }} />
+      </mesh>
+    </group>
+  );
+};
+
+const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning, isNight = false }) => {
   const cloudTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 0.96, midOpacity: 0.35, edgeOpacity: 0, shape: 'cloud' }), []);
-  // leafTexture no longer needed for trees
   const petalTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 1, midOpacity: 0.22, edgeOpacity: 0, shape: 'leaf' }), []);
 
   return (
     <>
-      <fog attach="fog" args={[toColor(206, 44, 80), 45, 230]} />
+      <fog attach="fog" args={[isNight ? toColor(225, 40, 12) : toColor(206, 44, 80), 45, 230]} />
 
-      <ambientLight intensity={0.62} color={toColor(42, 100, 95)} />
-      <directionalLight position={[14, 16, 2]} intensity={0.95} color={toColor(40, 92, 90)} />
-      <directionalLight position={[-8, 8, 12]} intensity={0.34} color={toColor(208, 66, 83)} />
-      <hemisphereLight color={toColor(206, 70, 84)} groundColor={toColor(126, 30, 35)} intensity={0.46} />
+      <ambientLight intensity={isNight ? 0.15 : 0.62} color={isNight ? toColor(220, 40, 60) : toColor(42, 100, 95)} />
+      <directionalLight position={[14, 16, 2]} intensity={isNight ? 0.2 : 0.95} color={isNight ? toColor(220, 30, 70) : toColor(40, 92, 90)} />
+      <directionalLight position={[-8, 8, 12]} intensity={isNight ? 0.1 : 0.34} color={toColor(208, 66, 83)} />
+      <hemisphereLight color={isNight ? toColor(225, 30, 30) : toColor(206, 70, 84)} groundColor={toColor(126, 30, 35)} intensity={isNight ? 0.15 : 0.46} />
 
-      <SkyDome />
-      <SunAndGlow />
+      <SkyDome isNight={isNight} />
+      {!isNight && <SunAndGlow />}
+      {isNight && <MoonGlow isNight={isNight} />}
+      {isNight && <NightStars isNight={isNight} />}
       <CloudField cloudTexture={cloudTexture} />
       <MountainRange />
       <RiverBanks />
@@ -1229,12 +1320,12 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
   );
 };
 
-const Scene3D: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
+const Scene3D: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning, isNight = false }) => {
   return (
     <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
       <Canvas camera={{ position: [0, 1, 13], fov: 54, near: 0.1, far: 260 }} gl={{ antialias: true, alpha: true }}>
         <React.Suspense fallback={null}>
-          <SceneContent currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />
+          <SceneContent currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} isNight={isNight} />
         </React.Suspense>
       </Canvas>
     </div>
