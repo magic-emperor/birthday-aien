@@ -264,51 +264,110 @@ const MountainRange: React.FC = () => (
   </group>
 );
 
-// ===== GRASS FIELD on both sides =====
+// ===== DENSE GRASS FIELD using InstancedMesh for performance =====
 const GrassField: React.FC = () => {
-  const grassRef = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const BLADE_COUNT = 8000;
 
-  const blades = useMemo(() =>
-    Array.from({ length: 600 }, (_, i) => {
-      const side = i % 2 === 0 ? -1 : 1;
-      const x = side * (14 + hash(i * 3.1) * 22);
-      const z = -145 + hash(i * 5.7) * 195;
-      const height = 0.4 + hash(i * 7.3) * 0.8;
-      const width = 0.06 + hash(i * 9.1) * 0.08;
-      const lean = (hash(i * 11.3) - 0.5) * 0.4;
-      const hue = 95 + hash(i * 13.7) * 35;
-      const sat = 40 + hash(i * 15.1) * 30;
-      const light = 25 + hash(i * 17.9) * 20;
-      const phase = hash(i * 19.3) * Math.PI * 2;
-      const speed = 1.2 + hash(i * 21.7) * 1.5;
-      return { x, z, height, width, lean, hue, sat, light, phase, speed };
-    }), []
-  );
+  const { matrix, bladeData } = useMemo(() => {
+    const dummy = new THREE.Object3D();
+    const matrix = new Float32Array(BLADE_COUNT * 16);
+    const bladeData: Array<{ lean: number; phase: number; speed: number; idx: number }> = [];
+
+    for (let i = 0; i < BLADE_COUNT; i++) {
+      const side = hash(i * 2.1) > 0.5 ? 1 : -1;
+      const x = side * (12 + hash(i * 3.1) * 28);
+      const z = -150 + hash(i * 5.7) * 210;
+      const height = 0.35 + hash(i * 7.3) * 0.9;
+      const lean = (hash(i * 11.3) - 0.5) * 0.35;
+      const rotY = hash(i * 23.1) * Math.PI;
+
+      dummy.position.set(x, -2.85 + height * 0.5, z);
+      dummy.rotation.set(0, rotY, lean);
+      dummy.scale.set(0.08 + hash(i * 9.1) * 0.06, height, 1);
+      dummy.updateMatrix();
+      dummy.matrix.toArray(matrix, i * 16);
+
+      bladeData.push({
+        lean,
+        phase: hash(i * 19.3) * Math.PI * 2,
+        speed: 1.2 + hash(i * 21.7) * 1.5,
+        idx: i,
+      });
+    }
+    return { matrix, bladeData };
+  }, []);
+
+  // Set initial matrices
+  useMemo(() => {
+    if (!meshRef.current) return;
+    const m = new THREE.Matrix4();
+    for (let i = 0; i < BLADE_COUNT; i++) {
+      m.fromArray(matrix, i * 16);
+      meshRef.current.setMatrixAt(i, m);
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [matrix]);
 
   useFrame(({ clock }) => {
-    if (!grassRef.current) return;
+    if (!meshRef.current) return;
     const t = clock.elapsedTime;
-    grassRef.current.children.forEach((child, i) => {
-      const blade = blades[i];
-      if (!blade) return;
-      const sway = Math.sin(t * blade.speed + blade.phase) * 0.15 + Math.sin(t * 0.7 + blade.phase * 1.3) * 0.08;
-      child.rotation.z = blade.lean + sway;
-    });
+    const dummy = new THREE.Object3D();
+    const m = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    const scale = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+
+    // Only update a subset each frame for performance
+    const batchSize = 2000;
+    const offset = (Math.floor(t * 20) % 4) * batchSize;
+
+    for (let j = 0; j < batchSize; j++) {
+      const i = offset + j;
+      if (i >= BLADE_COUNT) break;
+      const blade = bladeData[i];
+      m.fromArray(matrix, i * 16);
+      m.decompose(pos, quat, scale);
+
+      const sway = Math.sin(t * blade.speed + blade.phase) * 0.18 +
+                   Math.sin(t * 0.6 + blade.phase * 1.3 + pos.x * 0.1) * 0.1;
+
+      dummy.position.copy(pos);
+      dummy.scale.copy(scale);
+      dummy.rotation.set(0, 0, blade.lean + sway);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(i, dummy.matrix);
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
+  // Create varied green colors per instance
+  const colors = useMemo(() => {
+    const arr = new Float32Array(BLADE_COUNT * 3);
+    for (let i = 0; i < BLADE_COUNT; i++) {
+      const c = toColor(
+        90 + hash(i * 13.7) * 40,
+        40 + hash(i * 15.1) * 35,
+        22 + hash(i * 17.9) * 22
+      );
+      arr[i * 3] = c.r;
+      arr[i * 3 + 1] = c.g;
+      arr[i * 3 + 2] = c.b;
+    }
+    return arr;
+  }, []);
+
   return (
-    <group ref={grassRef}>
-      {blades.map((b, i) => (
-        <mesh key={i} position={[b.x, -2.85, b.z]} rotation={[0, hash(i * 23.1) * Math.PI, b.lean]}>
-          <planeGeometry args={[b.width, b.height]} />
-          <meshStandardMaterial
-            color={toColor(b.hue, b.sat, b.light)}
-            roughness={0.9}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, BLADE_COUNT]} frustumCulled={false}>
+      <planeGeometry args={[1, 1]}>
+        <instancedBufferAttribute attach="attributes-color" args={[colors, 3]} />
+      </planeGeometry>
+      <meshStandardMaterial
+        vertexColors
+        roughness={0.85}
+        side={THREE.DoubleSide}
+      />
+    </instancedMesh>
   );
 };
 
