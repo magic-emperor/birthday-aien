@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Scene3D from '@/components/Scene3D';
+import FallingPetals from '@/components/FallingPetals';
 import HeroSection from '@/components/HeroSection';
 import JourneySection from '@/components/JourneySection';
 import GallerySection from '@/components/GallerySection';
@@ -175,7 +176,9 @@ const Index = () => {
       {/* 3D Background with tree */}
       <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
 
-      {/* Main content layer */}
+      {/* Falling petals overlay */}
+      <FallingPetals />
+
       <div className="fixed inset-0 z-10" style={{ perspective: '1200px' }}>
         <AnimatePresence mode="wait">
           <motion.div
