@@ -1267,23 +1267,23 @@ const MoonGlow: React.FC<{ isNight: boolean }> = ({ isNight }) => {
     const targetOpacity = isNight ? 1 : 0;
     groupRef.current.children.forEach(child => {
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      mat.opacity += (targetOpacity * (mat.userData.baseOpacity || 0.8) - mat.opacity) * 0.03;
+      mat.opacity += (targetOpacity * (mat.userData.baseOpacity || 0.9) - mat.opacity) * 0.06;
     });
   });
 
   return (
-    <group ref={groupRef} position={[-25, 30, -140]}>
+    <group ref={groupRef} position={[-30, 45, -160]}>
       <mesh>
-        <circleGeometry args={[4, 32]} />
-        <meshBasicMaterial color={toColor(45, 10, 92)} transparent opacity={0} userData={{ baseOpacity: 0.9 }} />
+        <circleGeometry args={[6, 32]} />
+        <meshBasicMaterial color={toColor(45, 8, 95)} transparent opacity={0} userData={{ baseOpacity: 0.95 }} />
       </mesh>
       <mesh>
-        <circleGeometry args={[8, 32]} />
-        <meshBasicMaterial color={toColor(45, 15, 85)} transparent opacity={0} userData={{ baseOpacity: 0.15 }} />
+        <circleGeometry args={[12, 32]} />
+        <meshBasicMaterial color={toColor(45, 12, 88)} transparent opacity={0} userData={{ baseOpacity: 0.2 }} />
       </mesh>
       <mesh>
-        <circleGeometry args={[14, 32]} />
-        <meshBasicMaterial color={toColor(220, 20, 70)} transparent opacity={0} userData={{ baseOpacity: 0.06 }} />
+        <circleGeometry args={[20, 32]} />
+        <meshBasicMaterial color={toColor(220, 15, 75)} transparent opacity={0} userData={{ baseOpacity: 0.08 }} />
       </mesh>
     </group>
   );
