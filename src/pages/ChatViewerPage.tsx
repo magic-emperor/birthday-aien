@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,8 +15,6 @@ const parseInstagramHtml = (html: string): ChatMessage[] => {
   const doc = parser.parseFromString(html, 'text/html');
   const messages: ChatMessage[] = [];
 
-  // Instagram HTML export: each message is a div with classes "pam _3-95 _2ph- _a6-g uiBoxWhite noborder"
-  // Structure: <h2 class="_a6-h _a6-i">SenderName</h2> <div class="_a6-p">content</div> <div class="_a6-o">date</div>
   const messageBlocks = doc.querySelectorAll('div.pam._3-95._2ph-._a6-g');
 
   messageBlocks.forEach((block) => {
@@ -26,7 +24,6 @@ const parseInstagramHtml = (html: string): ChatMessage[] => {
 
     if (senderEl && contentEl) {
       const sender = senderEl.textContent?.trim() || 'Unknown';
-      // Get text content but skip nested link text for cleaner display
       const rawContent = contentEl.textContent?.trim() || '';
       const content = rawContent.replace(/\s+/g, ' ').trim();
       const dateStr = dateEl?.textContent?.trim() || '';
@@ -41,6 +38,34 @@ const parseInstagramHtml = (html: string): ChatMessage[] => {
   return messages;
 };
 
+// Helper to make URLs clickable
+const renderContentWithLinks = (content: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      urlRegex.lastIndex = 0; // Reset regex state
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-400 hover:text-purple-300 underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part.includes('instagram.com/reel') ? '🎬 Instagram Reel' : 
+           part.includes('instagram.com') ? '📸 Instagram Link' : part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
+const MESSAGES_PER_PAGE = 50;
+
 const ChatViewerPage: React.FC = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -48,6 +73,8 @@ const ChatViewerPage: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [fileName, setFileName] = useState('');
   const [senderFilter, setSenderFilter] = useState<string>('all');
+  const [visibleCount, setVisibleCount] = useState(MESSAGES_PER_PAGE);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -65,11 +92,17 @@ const ChatViewerPage: React.FC = () => {
         processed++;
 
         if (processed === files.length) {
+          // Sort all messages chronologically (oldest first)
           allMessages.sort((a, b) => a.timestamp - b.timestamp);
           setMessages(prev => {
             const combined = [...prev, ...allMessages];
-            combined.sort((a, b) => a.timestamp - b.timestamp);
-            return combined;
+            // Remove duplicates based on content + timestamp
+            const unique = combined.filter((msg, idx, arr) => 
+              arr.findIndex(m => m.content === msg.content && m.timestamp === msg.timestamp) === idx
+            );
+            // Sort chronologically (oldest first, newest last - like Instagram)
+            unique.sort((a, b) => a.timestamp - b.timestamp);
+            return unique;
           });
           setIsLoaded(true);
           setFileName(prev => prev ? `${prev} + ${files.length} file(s)` : (files.length === 1 ? files[0].name : `${files.length} files`));
@@ -100,6 +133,33 @@ const ChatViewerPage: React.FC = () => {
     return filtered;
   }, [messages, searchTerm, senderFilter]);
 
+  // Lazy loading with Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < filteredMessages.length) {
+          setVisibleCount(prev => Math.min(prev + MESSAGES_PER_PAGE, filteredMessages.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [visibleCount, filteredMessages.length]);
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(MESSAGES_PER_PAGE);
+  }, [searchTerm, senderFilter]);
+
+  const visibleMessages = useMemo(() => {
+    return filteredMessages.slice(0, visibleCount);
+  }, [filteredMessages, visibleCount]);
+
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-[hsl(270,30%,8%)] via-[hsl(265,25%,12%)] to-[hsl(260,20%,6%)] overflow-y-auto">
       {/* Header */}
@@ -117,7 +177,6 @@ const ChatViewerPage: React.FC = () => {
 
       <div className="max-w-3xl mx-auto px-4 pb-12">
         {!isLoaded ? (
-          /* Upload screen */
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -152,7 +211,6 @@ const ChatViewerPage: React.FC = () => {
             </label>
           </motion.div>
         ) : (
-          /* Chat viewer */
           <div className="py-6">
             {/* Stats */}
             <div className="text-center mb-6">
@@ -188,7 +246,6 @@ const ChatViewerPage: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {/* Upload more inline */}
               <label className="cursor-pointer block">
                 <span className="text-white/30 text-xs font-body hover:text-white/50 transition-all">
                   + Upload more files
@@ -212,14 +269,14 @@ const ChatViewerPage: React.FC = () => {
 
             {/* Messages */}
             <div className="space-y-1">
-              {filteredMessages.map((msg, i) => {
+              {visibleMessages.map((msg, i) => {
                 const isFirst = senders[0] === msg.sender;
                 return (
                   <motion.div
-                    key={i}
+                    key={`${msg.timestamp}-${i}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: Math.min(i * 0.005, 0.3) }}
+                    transition={{ delay: Math.min(i * 0.002, 0.1) }}
                     className={`flex ${isFirst ? 'justify-start' : 'justify-end'}`}
                   >
                     <div
@@ -230,7 +287,9 @@ const ChatViewerPage: React.FC = () => {
                       }`}
                     >
                       <p className="text-xs text-white/40 font-body mb-1">{msg.sender}</p>
-                      <p className="text-sm text-white/85 font-body leading-relaxed break-words">{msg.content}</p>
+                      <p className="text-sm text-white/85 font-body leading-relaxed break-words">
+                        {renderContentWithLinks(msg.content)}
+                      </p>
                       {msg.date && (
                         <p className="text-[10px] text-white/25 font-body mt-1.5 text-right">{msg.date}</p>
                       )}
@@ -239,6 +298,16 @@ const ChatViewerPage: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Lazy load trigger */}
+            {visibleCount < filteredMessages.length && (
+              <div ref={loaderRef} className="text-center py-8">
+                <p className="text-white/30 font-body text-sm">Loading more messages...</p>
+                <p className="text-white/20 font-body text-xs mt-1">
+                  Showing {visibleCount} of {filteredMessages.length}
+                </p>
+              </div>
+            )}
 
             {filteredMessages.length === 0 && (
               <div className="text-center py-16">
