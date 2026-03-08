@@ -1,91 +1,12 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const extractVideoId = (url: string): string | null => {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    /^([a-zA-Z0-9_-]{11})$/,
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) return m[1];
-  }
-  return null;
-};
-
-interface SearchResult {
-  videoId: string;
-  title: string;
-  thumbnail: string;
-  uploaderName: string;
-}
+import playlist, { Song } from '@/data/playlist';
 
 const MusicPage: React.FC = () => {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isAudioOnly, setIsAudioOnly] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = useCallback(async () => {
-    if (!query.trim()) return;
-    setError('');
-
-    // Check if it's a YouTube URL first
-    const videoId = extractVideoId(query.trim());
-    if (videoId) {
-      setCurrentVideoId(videoId);
-      setQuery('');
-      setSearchResults([]);
-      return;
-    }
-
-    // Otherwise search via CORS proxy → Piped API
-    setIsSearching(true);
-    setSearchResults([]);
-
-    const PIPED_INSTANCES = [
-      'https://pipedapi.kavin.rocks',
-      'https://pipedapi.adminforge.de',
-      'https://pipedapi.in.projectsegfau.lt',
-      'https://api.piped.yt',
-    ];
-
-    for (const instance of PIPED_INSTANCES) {
-      try {
-        const targetUrl = `${instance}/search?q=${encodeURIComponent(query.trim())}&filter=videos`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-
-        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-        if (!res.ok) continue;
-
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          setSearchResults(
-            data.items
-              .filter((item: any) => item.url?.includes('/watch'))
-              .slice(0, 10)
-              .map((item: any) => ({
-                videoId: item.url?.replace('/watch?v=', '') || '',
-                title: item.title || 'Untitled',
-                thumbnail: item.thumbnail || '',
-                uploaderName: item.uploaderName || '',
-              }))
-          );
-          setIsSearching(false);
-          return;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    setError('Search failed. Please try again or paste a YouTube link.');
-    setIsSearching(false);
-  }, [query]);
 
   const audioBars = useMemo(() =>
     Array.from({ length: 24 }, (_, i) => ({
@@ -134,58 +55,61 @@ const MusicPage: React.FC = () => {
         >
           <h1 className="text-3xl md:text-4xl font-display text-white/90 mb-3">🎵 Your Song, Your Moment</h1>
           <p className="text-white/50 font-body text-sm md:text-base italic leading-relaxed max-w-md mx-auto">
-            Aien, pick a song that makes your heart smile — search for it and let the music play while my love wraps around every note ♥
+            Aien, pick a song that makes your heart smile — let the music play while my love wraps around every note ♥
           </p>
         </motion.div>
 
-        {/* Single search bar */}
+        {/* Song list */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex gap-2 mb-6"
+          className="grid gap-2 mb-8"
         >
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            placeholder="Search a song name or paste a YouTube link..."
-            className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 font-body text-sm focus:outline-none focus:border-white/30 transition-colors"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={isSearching}
-            className="px-6 py-3 rounded-xl bg-white/15 border border-white/15 text-white text-sm font-body hover:bg-white/25 transition-all disabled:opacity-50"
-          >
-            {isSearching ? '...' : '🔍'}
-          </button>
+          {playlist.map((song, i) => (
+            <motion.button
+              key={song.youtubeId}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + i * 0.05 }}
+              onClick={() => setCurrentSong(song)}
+              className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left ${
+                currentSong?.youtubeId === song.youtubeId
+                  ? 'bg-white/15 border border-white/20 shadow-lg shadow-white/5'
+                  : 'bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10'
+              }`}
+            >
+              <span className="text-2xl flex-shrink-0">{song.emoji || '🎵'}</span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-body font-medium ${
+                  currentSong?.youtubeId === song.youtubeId ? 'text-white' : 'text-white/80'
+                }`}>
+                  {song.name}
+                </p>
+                <p className="text-xs text-white/40 font-body">{song.artist}</p>
+              </div>
+              {currentSong?.youtubeId === song.youtubeId && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex gap-0.5 items-end h-4"
+                >
+                  {[1, 2, 3].map(n => (
+                    <motion.div
+                      key={n}
+                      className="w-1 bg-white/60 rounded-full"
+                      animate={{ height: [4, 12 + n * 2, 6, 14, 4] }}
+                      transition={{ duration: 0.8, repeat: Infinity, delay: n * 0.15 }}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </motion.button>
+          ))}
         </motion.div>
 
-        {/* Error */}
-        {error && <p className="text-sm text-red-400/80 mb-4 font-body">{error}</p>}
-
-        {/* Search results */}
-        {searchResults.length > 0 && (
-          <div className="space-y-2 mb-6 max-h-[50vh] overflow-y-auto">
-            {searchResults.map((r) => (
-              <button
-                key={r.videoId}
-                onClick={() => { setCurrentVideoId(r.videoId); setSearchResults([]); setQuery(''); }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-left"
-              >
-                <img src={r.thumbnail} alt="" className="w-24 h-16 rounded-lg object-cover flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm text-white/90 font-body line-clamp-2">{r.title}</p>
-                  <p className="text-xs text-white/40 font-body mt-0.5">{r.uploaderName}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Video / Audio toggle */}
-        {currentVideoId && (
+        {currentSong && (
           <div className="flex items-center justify-center gap-3 mb-5">
             <button
               onClick={() => setIsAudioOnly(false)}
@@ -208,24 +132,22 @@ const MusicPage: React.FC = () => {
 
         {/* Player */}
         <AnimatePresence mode="wait">
-          {currentVideoId && (
+          {currentSong && (
             <motion.div
-              key={currentVideoId + (isAudioOnly ? '-a' : '-v')}
+              key={currentSong.youtubeId + (isAudioOnly ? '-a' : '-v')}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
               {isAudioOnly ? (
                 <>
-                  {/* Completely hidden iframe — only plays audio */}
                   <iframe
-                    src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&rel=0`}
+                    src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&rel=0`}
                     title="Audio playback"
                     allow="autoplay; encrypted-media"
                     className="fixed"
                     style={{ width: 1, height: 1, top: -9999, left: -9999, opacity: 0, pointerEvents: 'none' }}
                   />
-                  {/* Audio visualizer */}
                   <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 py-12 px-6 max-w-md mx-auto">
                     <div className="flex items-end justify-center gap-1 h-20 mb-6">
                       {audioBars.map((bar, i) => (
@@ -237,14 +159,15 @@ const MusicPage: React.FC = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-center text-white/50 font-body text-sm">♫ Playing audio...</p>
+                    <p className="text-center text-white/60 font-body text-sm font-medium">{currentSong.name}</p>
+                    <p className="text-center text-white/30 font-body text-xs mt-1">{currentSong.artist}</p>
                   </div>
                 </>
               ) : (
                 <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
                   <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                     <iframe
-                      src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&rel=0`}
+                      src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&rel=0`}
                       title="YouTube player"
                       allow="autoplay; encrypted-media"
                       allowFullScreen
@@ -257,10 +180,10 @@ const MusicPage: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {!currentVideoId && searchResults.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center py-16">
-            <p className="text-5xl mb-4">🎶</p>
-            <p className="text-white/30 font-body text-xs">Type a song name above and hit search</p>
+        {!currentSong && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center py-10">
+            <p className="text-4xl mb-3">🎶</p>
+            <p className="text-white/30 font-body text-xs">Pick a song from the list above</p>
           </motion.div>
         )}
       </div>
