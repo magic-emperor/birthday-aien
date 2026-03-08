@@ -7,6 +7,13 @@ const MusicPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isAudioOnly, setIsAudioOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredPlaylist = useMemo(() => {
+    if (!searchQuery.trim()) return playlist;
+    const q = searchQuery.toLowerCase();
+    return playlist.filter(s => s.name.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
+  }, [searchQuery]);
 
   const audioBars = useMemo(() =>
     Array.from({ length: 24 }, (_, i) => ({
@@ -59,6 +66,27 @@ const MusicPage: React.FC = () => {
           </p>
         </motion.div>
 
+        {/* Search bar */}
+        <div className="mb-6">
+          <div className="relative max-w-md mx-auto">
+            <input
+              type="text"
+              placeholder="🔍 Search songs or artists..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:bg-white/8 transition-all backdrop-blur-md"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Song list */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -66,7 +94,10 @@ const MusicPage: React.FC = () => {
           transition={{ delay: 0.3 }}
           className="grid gap-2 mb-8"
         >
-          {playlist.map((song, i) => (
+          {filteredPlaylist.length === 0 && (
+            <p className="text-center text-white/30 font-body text-sm py-6">No songs found ✦</p>
+          )}
+          {filteredPlaylist.map((song, i) => (
             <motion.button
               key={song.youtubeId}
               initial={{ opacity: 0, x: -20 }}
