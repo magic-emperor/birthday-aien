@@ -264,107 +264,180 @@ const MountainRange: React.FC = () => (
   </group>
 );
 
-const RiverBanks: React.FC = () => (
-  <group>
-    <mesh position={[-13, -3.22, -54]} rotation={[-Math.PI / 2, 0.06, 0.03]}>
-      <planeGeometry args={[24, 220, 24, 40]} />
-      <meshStandardMaterial color={toColor(126, 35, 34)} roughness={0.97} />
-    </mesh>
+// ===== ENHANCED RIVER BANKS with pebbles =====
+const RiverBanks: React.FC = () => {
+  const pebbles = useMemo(() =>
+    Array.from({ length: 80 }, (_, i) => {
+      const side = i % 2 === 0 ? -1 : 1;
+      const x = side * (10 + hash(i * 7.1) * 5);
+      const z = -140 + hash(i * 11.3) * 180;
+      const s = 0.15 + hash(i * 13.7) * 0.35;
+      const hue = 25 + hash(i * 17.1) * 15;
+      const light = 30 + hash(i * 19.3) * 20;
+      return { x, z, s, hue, light };
+    }), []
+  );
 
-    <mesh position={[13, -3.22, -54]} rotation={[-Math.PI / 2, -0.06, -0.03]}>
-      <planeGeometry args={[24, 220, 24, 40]} />
-      <meshStandardMaterial color={toColor(128, 35, 35)} roughness={0.97} />
-    </mesh>
+  return (
+    <group>
+      <mesh position={[-13, -3.22, -54]} rotation={[-Math.PI / 2, 0.06, 0.03]}>
+        <planeGeometry args={[24, 220, 24, 40]} />
+        <meshStandardMaterial color={toColor(126, 35, 34)} roughness={0.97} />
+      </mesh>
+      <mesh position={[13, -3.22, -54]} rotation={[-Math.PI / 2, -0.06, -0.03]}>
+        <planeGeometry args={[24, 220, 24, 40]} />
+        <meshStandardMaterial color={toColor(128, 35, 35)} roughness={0.97} />
+      </mesh>
+      <mesh position={[0, -3.34, 15]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[72, 34]} />
+        <meshStandardMaterial color={toColor(123, 29, 32)} roughness={0.98} />
+      </mesh>
+      {pebbles.map((p, i) => (
+        <mesh key={i} position={[p.x, -3.05, p.z]} rotation={[0, hash(i * 23) * Math.PI, 0]}>
+          <sphereGeometry args={[p.s, 6, 5]} />
+          <meshStandardMaterial color={toColor(p.hue, 15, p.light)} roughness={0.95} flatShading />
+        </mesh>
+      ))}
+    </group>
+  );
+};
 
-    <mesh position={[0, -3.34, 15]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[72, 34]} />
-      <meshStandardMaterial color={toColor(123, 29, 32)} roughness={0.98} />
-    </mesh>
-  </group>
-);
-
+// ===== ENHANCED FLOWING RIVER =====
 const FlowingRiver: React.FC = () => {
   const riverRef = useRef<THREE.Mesh>(null);
+  const shimmerRef = useRef<THREE.Mesh>(null);
+  const foamRef = useRef<THREE.Group>(null);
   const baseRef = useRef<Float32Array | null>(null);
+  const shimmerBaseRef = useRef<Float32Array | null>(null);
 
   const riverGeometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(1, 220, 96, 320);
+    const geo = new THREE.PlaneGeometry(1, 220, 128, 400);
     const pos = geo.attributes.position;
     const arr = pos.array as Float32Array;
-
     for (let i = 0; i < pos.count; i++) {
-      const baseX = arr[i * 3]; // -0.5..0.5
+      const baseX = arr[i * 3];
       const z = arr[i * 3 + 1];
-
       const center = Math.sin(z * 0.035) * 2.2 + Math.sin(z * 0.011 + 1.5) * 1.5;
       const width = 11 + Math.sin(z * 0.025 + 0.8) * 1.8;
-
       arr[i * 3] = center + baseX * width;
       arr[i * 3 + 2] = 0;
     }
-
     pos.needsUpdate = true;
     geo.computeVertexNormals();
     return geo;
   }, []);
 
+  const shimmerGeometry = useMemo(() => riverGeometry.clone(), [riverGeometry]);
+
+  const foamSpots = useMemo(() =>
+    Array.from({ length: 30 }, (_, i) => {
+      const z = -120 + i * 8 + (hash(i * 5.3) - 0.5) * 6;
+      const center = Math.sin(z * 0.035) * 2.2 + Math.sin(z * 0.011 + 1.5) * 1.5;
+      const side = (hash(i * 7.1) - 0.5) * 8;
+      return {
+        x: center + side, z,
+        size: 0.3 + hash(i * 9.7) * 0.5,
+        speed: 0.8 + hash(i * 11.3) * 1.2,
+        phase: hash(i * 13.7) * Math.PI * 2,
+      };
+    }), []
+  );
+
   useFrame(({ clock }) => {
-    if (!riverRef.current) return;
-
     const t = clock.elapsedTime;
-    const geo = riverRef.current.geometry;
-    const pos = geo.attributes.position;
-    const arr = pos.array as Float32Array;
 
-    if (!baseRef.current) {
-      baseRef.current = new Float32Array(arr);
+    if (riverRef.current) {
+      const pos = riverRef.current.geometry.attributes.position;
+      const arr = pos.array as Float32Array;
+      if (!baseRef.current) baseRef.current = new Float32Array(arr);
+      const base = baseRef.current;
+      for (let i = 0; i < pos.count; i++) {
+        const x = base[i * 3];
+        const z = base[i * 3 + 1];
+        const waveA = Math.sin(z * 0.17 + t * 1.6) * 0.14;
+        const waveB = Math.cos(x * 0.65 - t * 0.9) * 0.09;
+        const waveC = Math.sin((x + z) * 0.11 + t * 1.25) * 0.06;
+        const ripple = Math.sin(x * 2.5 + z * 1.8 + t * 3.2) * 0.02;
+        const flow = Math.sin((z + t * 6) * 0.052) * 0.04;
+        arr[i * 3 + 2] = waveA + waveB + waveC + ripple + flow;
+      }
+      pos.needsUpdate = true;
+      riverRef.current.geometry.computeVertexNormals();
     }
 
-    const base = baseRef.current;
-
-    for (let i = 0; i < pos.count; i++) {
-      const x = base[i * 3];
-      const z = base[i * 3 + 1];
-      const waveA = Math.sin(z * 0.17 + t * 1.6) * 0.12;
-      const waveB = Math.cos(x * 0.65 - t * 0.9) * 0.08;
-      const waveC = Math.sin((x + z) * 0.11 + t * 1.25) * 0.05;
-      const drift = Math.sin((z + t * 8) * 0.052) * 0.03;
-      arr[i * 3 + 2] = waveA + waveB + waveC + drift;
+    if (shimmerRef.current) {
+      const pos = shimmerRef.current.geometry.attributes.position;
+      const arr = pos.array as Float32Array;
+      if (!shimmerBaseRef.current) shimmerBaseRef.current = new Float32Array(arr);
+      const base = shimmerBaseRef.current;
+      for (let i = 0; i < pos.count; i++) {
+        const x = base[i * 3];
+        const z = base[i * 3 + 1];
+        arr[i * 3 + 2] = Math.sin(z * 0.22 + t * 2.1 + 0.5) * 0.08 + Math.cos(x * 1.1 - t * 1.4 + 1.2) * 0.05 + 0.03;
+      }
+      pos.needsUpdate = true;
+      shimmerRef.current.geometry.computeVertexNormals();
     }
 
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
+    if (foamRef.current) {
+      foamRef.current.children.forEach((child, i) => {
+        const spot = foamSpots[i];
+        if (!spot) return;
+        const pulse = 0.7 + Math.sin(t * spot.speed + spot.phase) * 0.3;
+        child.scale.set(spot.size * pulse, spot.size * pulse, 1);
+        (child as THREE.Mesh).position.y = 0.04 + Math.sin(t * 1.5 + spot.phase) * 0.02;
+      });
+    }
   });
 
   return (
     <group position={[0, -3.04, -54]}>
-      <mesh position={[0, -0.42, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={riverGeometry}>
-        <meshStandardMaterial color={toColor(209, 50, 22)} roughness={1} />
+      {/* River bed */}
+      <mesh position={[0, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={riverGeometry}>
+        <meshStandardMaterial color={toColor(205, 45, 15)} roughness={1} />
       </mesh>
 
+      {/* Main water surface */}
       <mesh ref={riverRef} rotation={[-Math.PI / 2, 0, 0]} geometry={riverGeometry}>
         <meshStandardMaterial
-          color={toColor(199, 64, 46)}
-          emissive={toColor(197, 57, 31)}
-          emissiveIntensity={0.15}
-          transparent
-          opacity={0.74}
-          roughness={0.08}
-          metalness={0.6}
+          color={toColor(200, 58, 42)}
+          emissive={toColor(195, 50, 25)}
+          emissiveIntensity={0.12}
+          transparent opacity={0.72}
+          roughness={0.05} metalness={0.65}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      <mesh position={[0, 0.016, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={riverGeometry}>
+      {/* Shimmer/reflection layer */}
+      <mesh ref={shimmerRef} rotation={[-Math.PI / 2, 0, 0]} geometry={shimmerGeometry}>
         <meshStandardMaterial
-          color={toColor(197, 40, 84)}
-          transparent
-          opacity={0.08}
-          roughness={0}
-          metalness={1}
+          color={toColor(195, 35, 82)}
+          transparent opacity={0.12}
+          roughness={0} metalness={1}
           side={THREE.DoubleSide}
         />
       </mesh>
+
+      {/* Sun glint highlights */}
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={riverGeometry}>
+        <meshStandardMaterial
+          color={toColor(42, 80, 95)}
+          transparent opacity={0.06}
+          roughness={0} metalness={1}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Foam spots */}
+      <group ref={foamRef}>
+        {foamSpots.map((spot, i) => (
+          <mesh key={i} position={[spot.x, 0.04, spot.z]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[spot.size, 12]} />
+            <meshBasicMaterial color={toColor(200, 20, 92)} transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };
