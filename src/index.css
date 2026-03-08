@@ -6,59 +6,59 @@
 
 @layer base {
   :root {
-    --background: 30 40% 6%;
-    --foreground: 35 60% 92%;
+    --background: 240 15% 8%;
+    --foreground: 220 20% 93%;
 
-    --card: 25 30% 12%;
-    --card-foreground: 35 60% 92%;
+    --card: 235 15% 14%;
+    --card-foreground: 220 20% 93%;
 
-    --popover: 25 30% 12%;
-    --popover-foreground: 35 60% 92%;
+    --popover: 235 15% 14%;
+    --popover-foreground: 220 20% 93%;
 
-    --primary: 25 90% 58%;
-    --primary-foreground: 30 40% 6%;
+    --primary: 200 70% 65%;
+    --primary-foreground: 240 15% 8%;
 
-    --secondary: 15 60% 22%;
-    --secondary-foreground: 35 60% 92%;
+    --secondary: 260 30% 25%;
+    --secondary-foreground: 220 20% 93%;
 
-    --muted: 20 25% 16%;
-    --muted-foreground: 30 20% 55%;
+    --muted: 230 15% 18%;
+    --muted-foreground: 220 15% 55%;
 
-    --accent: 340 45% 55%;
-    --accent-foreground: 35 60% 92%;
+    --accent: 320 50% 68%;
+    --accent-foreground: 220 20% 93%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 25 20% 20%;
-    --input: 25 20% 20%;
-    --ring: 25 90% 58%;
+    --border: 230 15% 22%;
+    --input: 230 15% 22%;
+    --ring: 200 70% 65%;
 
     --radius: 0.75rem;
 
-    --sunset-gold: 40 85% 55%;
-    --sunset-orange: 25 90% 58%;
-    --sunset-rose: 340 45% 55%;
-    --sunset-peach: 20 70% 75%;
-    --sunset-cream: 35 60% 92%;
-    --sunset-deep: 15 60% 12%;
-    --sunset-warm: 30 50% 30%;
+    --sunset-gold: 45 80% 70%;
+    --sunset-orange: 200 70% 65%;
+    --sunset-rose: 320 50% 68%;
+    --sunset-peach: 280 40% 78%;
+    --sunset-cream: 220 20% 93%;
+    --sunset-deep: 250 20% 14%;
+    --sunset-warm: 230 25% 30%;
 
-    --gradient-sunset: linear-gradient(135deg, hsl(25 90% 58%), hsl(340 45% 55%), hsl(280 30% 40%));
-    --gradient-warm: linear-gradient(180deg, hsl(30 40% 6%), hsl(15 60% 12%), hsl(25 30% 12%));
-    --gradient-glow: radial-gradient(ellipse at center, hsl(25 90% 58% / 0.15), transparent 70%);
+    --gradient-sunset: linear-gradient(135deg, hsl(200 70% 65%), hsl(280 45% 65%), hsl(320 50% 68%));
+    --gradient-warm: linear-gradient(180deg, hsl(240 15% 8%), hsl(250 20% 14%), hsl(235 15% 14%));
+    --gradient-glow: radial-gradient(ellipse at center, hsl(200 70% 65% / 0.15), transparent 70%);
 
-    --shadow-warm: 0 10px 40px -10px hsl(25 90% 58% / 0.3);
-    --shadow-glow: 0 0 60px hsl(25 90% 58% / 0.15);
+    --shadow-warm: 0 10px 40px -10px hsl(200 70% 65% / 0.3);
+    --shadow-glow: 0 0 60px hsl(200 70% 65% / 0.15);
 
-    --sidebar-background: 25 30% 10%;
-    --sidebar-foreground: 35 60% 92%;
-    --sidebar-primary: 25 90% 58%;
-    --sidebar-primary-foreground: 30 40% 6%;
-    --sidebar-accent: 15 60% 22%;
-    --sidebar-accent-foreground: 35 60% 92%;
-    --sidebar-border: 25 20% 20%;
-    --sidebar-ring: 25 90% 58%;
+    --sidebar-background: 235 15% 10%;
+    --sidebar-foreground: 220 20% 93%;
+    --sidebar-primary: 200 70% 65%;
+    --sidebar-primary-foreground: 240 15% 8%;
+    --sidebar-accent: 260 30% 25%;
+    --sidebar-accent-foreground: 220 20% 93%;
+    --sidebar-border: 230 15% 22%;
+    --sidebar-ring: 200 70% 65%;
   }
 }
 
