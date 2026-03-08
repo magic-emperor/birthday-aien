@@ -19,6 +19,7 @@ const SECTIONS = [
 const Index = () => {
   const [currentSection, setCurrentSection] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isNight, setIsNight] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const sectionContentRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef(0);
