@@ -1259,31 +1259,53 @@ const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   );
 };
 
-const MoonGlow: React.FC<{ isNight: boolean }> = ({ isNight }) => {
+const CrescentMoon: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
+
+  const crescentTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+    // Draw full moon circle
+    ctx.fillStyle = '#F5F0E0';
+    ctx.beginPath();
+    ctx.arc(64, 64, 50, 0, Math.PI * 2);
+    ctx.fill();
+    // Cut out overlapping circle to create crescent
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(84, 58, 44, 0, Math.PI * 2);
+    ctx.fill();
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
 
   useFrame(() => {
     if (!groupRef.current) return;
     const targetOpacity = isNight ? 1 : 0;
     groupRef.current.children.forEach(child => {
-      const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      mat.opacity += (targetOpacity * (mat.userData.baseOpacity || 0.9) - mat.opacity) * 0.06;
+      const mat = (child as THREE.Mesh | THREE.Sprite).material as THREE.SpriteMaterial | THREE.MeshBasicMaterial;
+      const base = (mat.userData as any)?.baseOpacity || 0.9;
+      mat.opacity += (targetOpacity * base - mat.opacity) * 0.06;
     });
   });
 
   return (
     <group ref={groupRef} position={[-30, 45, -160]}>
-      <mesh>
-        <circleGeometry args={[6, 32]} />
-        <meshBasicMaterial color={toColor(45, 8, 95)} transparent opacity={0} userData={{ baseOpacity: 0.95 }} />
-      </mesh>
+      {/* Crescent moon sprite */}
+      <sprite scale={[14, 14, 1]}>
+        <spriteMaterial map={crescentTexture} transparent opacity={0} userData={{ baseOpacity: 0.95 }} />
+      </sprite>
+      {/* Soft glow behind */}
       <mesh>
         <circleGeometry args={[12, 32]} />
-        <meshBasicMaterial color={toColor(45, 12, 88)} transparent opacity={0} userData={{ baseOpacity: 0.2 }} />
+        <meshBasicMaterial color={toColor(45, 15, 85)} transparent opacity={0} userData={{ baseOpacity: 0.12 }} />
       </mesh>
       <mesh>
-        <circleGeometry args={[20, 32]} />
-        <meshBasicMaterial color={toColor(220, 15, 75)} transparent opacity={0} userData={{ baseOpacity: 0.08 }} />
+        <circleGeometry args={[22, 32]} />
+        <meshBasicMaterial color={toColor(220, 15, 70)} transparent opacity={0} userData={{ baseOpacity: 0.05 }} />
       </mesh>
     </group>
   );
