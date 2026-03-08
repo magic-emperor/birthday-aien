@@ -8,21 +8,7 @@ interface SceneProps {
   isTransitioning: boolean;
 }
 
-type TreeData = {
-  position: [number, number, number];
-  scale: number;
-  seed: number;
-};
-
 type HslTriplet = [number, number, number];
-
-type BranchSegment = {
-  start: [number, number, number];
-  rotation: [number, number, number];
-  length: number;
-  thickness: number;
-  tip: [number, number, number];
-};
 
 const toColor = (h: number, s: number, l: number) => new THREE.Color().setHSL(h / 360, s / 100, l / 100);
 const fract = (n: number) => n - Math.floor(n);
@@ -383,147 +369,360 @@ const FlowingRiver: React.FC = () => {
   );
 };
 
-const buildTreeBranches = (seed: number): { primary: BranchSegment[]; secondary: BranchSegment[] } => {
-  const primary: BranchSegment[] = [];
-  const secondary: BranchSegment[] = [];
+// ===== SVG Tree rendered as a 3D billboard =====
+const TREE_SVG_WIDTH = 710;
+const TREE_SVG_HEIGHT = 700;
 
-  const primaryCount = 7;
-  for (let i = 0; i < primaryCount; i++) {
-    const a = (i / primaryCount) * Math.PI * 2 + hash(seed * (i + 2) * 11) * 0.7;
-    const pitch = 0.25 + hash(seed * (i + 3) * 13) * 0.45;
-    const len = 0.9 + hash(seed * (i + 4) * 17) * 1.05;
-    const y = 1.15 + hash(seed * (i + 5) * 19) * 1.05;
+const branchPaths: Array<{ points: [number, number][]; spread: number; density: number }> = [
+  { points: [[228,345],[195,315],[155,288],[115,262],[78,248],[45,240],[18,238]], spread: 30, density: 95 },
+  { points: [[268,330],[305,300],[348,272],[392,252],[432,238],[462,232],[488,235]], spread: 30, density: 95 },
+  { points: [[192,205],[168,178],[142,152],[118,128],[98,108],[82,90],[68,72]], spread: 26, density: 85 },
+  { points: [[308,205],[332,178],[358,152],[382,128],[402,108],[418,90],[432,72]], spread: 26, density: 85 },
+  { points: [[248,210],[246,178],[243,145],[240,112],[236,80],[232,52],[228,28]], spread: 24, density: 75 },
+  { points: [[225,300],[202,288],[178,278],[152,272],[128,268]], spread: 24, density: 65 },
+  { points: [[272,295],[298,278],[325,265],[352,252],[378,242]], spread: 24, density: 65 },
+  { points: [[245,280],[232,258],[220,238],[208,222],[195,208]], spread: 18, density: 35 },
+  { points: [[255,280],[268,258],[280,238],[292,222],[305,208]], spread: 18, density: 35 },
+  { points: [[155,288],[135,272],[112,268],[92,275],[75,285]], spread: 22, density: 50 },
+  { points: [[78,248],[58,232],[42,210],[35,188],[30,162]], spread: 22, density: 50 },
+  { points: [[78,248],[62,262],[48,278]], spread: 20, density: 32 },
+  { points: [[98,108],[80,88],[62,68],[50,50],[42,32]], spread: 20, density: 42 },
+  { points: [[98,108],[115,88],[132,65],[142,42],[148,22]], spread: 20, density: 42 },
+  { points: [[68,72],[52,52],[38,35]], spread: 16, density: 25 },
+  { points: [[68,72],[80,48],[92,28]], spread: 16, density: 25 },
+  { points: [[402,108],[420,88],[442,65],[458,48],[472,32]], spread: 20, density: 42 },
+  { points: [[402,108],[388,82],[372,58],[362,38],[355,18]], spread: 20, density: 42 },
+  { points: [[432,72],[448,52],[462,35]], spread: 16, density: 25 },
+  { points: [[432,72],[420,48],[410,25]], spread: 16, density: 25 },
+  { points: [[432,238],[455,218],[475,195],[490,178],[502,158]], spread: 22, density: 50 },
+  { points: [[432,238],[452,248],[468,258]], spread: 16, density: 25 },
+  { points: [[378,242],[395,222],[408,200]], spread: 16, density: 25 },
+  { points: [[236,80],[220,55],[205,35],[195,18],[188,-2]], spread: 16, density: 32 },
+  { points: [[236,80],[252,55],[268,38],[282,22],[295,10]], spread: 16, density: 32 },
+  { points: [[243,145],[225,128],[208,118]], spread: 15, density: 25 },
+  { points: [[243,145],[260,122],[278,112]], spread: 15, density: 25 },
+  { points: [[128,268],[112,260],[95,262]], spread: 15, density: 20 },
+  { points: [[128,268],[118,285],[110,300]], spread: 15, density: 20 },
+  { points: [[18,238],[2,228],[-10,215]], spread: 15, density: 20 },
+  { points: [[18,238],[8,252],[0,268]], spread: 15, density: 20 },
+  { points: [[30,162],[18,142],[10,122]], spread: 13, density: 18 },
+  { points: [[502,158],[512,138],[520,118]], spread: 13, density: 18 },
+  { points: [[18,238],[-5,248],[-25,262],[-40,278]], spread: 18, density: 35 },
+  { points: [[18,238],[-10,232],[-30,225],[-45,220]], spread: 16, density: 30 },
+  { points: [[488,235],[508,245],[525,258],[538,272]], spread: 18, density: 35 },
+  { points: [[488,235],[510,228],[528,222],[542,218]], spread: 16, density: 30 },
+  { points: [[45,240],[28,252],[15,268],[5,282]], spread: 16, density: 28 },
+  { points: [[115,262],[100,248],[82,238],[68,232]], spread: 16, density: 28 },
+  { points: [[155,288],[145,302],[138,318],[132,332]], spread: 14, density: 22 },
+  { points: [[462,232],[478,245],[492,260],[505,278]], spread: 16, density: 28 },
+  { points: [[392,252],[408,242],[422,235],[435,230]], spread: 16, density: 28 },
+  { points: [[348,272],[342,288],[338,305],[335,320]], spread: 14, density: 22 },
+  { points: [[142,152],[125,142],[108,138],[92,140]], spread: 16, density: 28 },
+  { points: [[142,152],[148,135],[155,118],[160,102]], spread: 14, density: 22 },
+  { points: [[358,152],[375,142],[392,138],[408,140]], spread: 16, density: 28 },
+  { points: [[358,152],[352,135],[345,118],[340,102]], spread: 14, density: 22 },
+  { points: [[248,210],[230,198],[212,190],[195,185]], spread: 18, density: 30 },
+  { points: [[248,210],[268,198],[288,190],[305,185]], spread: 18, density: 30 },
+  { points: [[240,112],[220,100],[200,92],[182,88]], spread: 16, density: 25 },
+  { points: [[240,112],[260,100],[280,92],[298,88]], spread: 16, density: 25 },
+  { points: [[42,32],[25,18],[12,5],[0,-8]], spread: 14, density: 20 },
+  { points: [[148,22],[158,5],[165,-10],[170,-22]], spread: 14, density: 20 },
+  { points: [[472,32],[485,18],[495,5],[502,-8]], spread: 14, density: 20 },
+  { points: [[355,18],[345,5],[338,-10],[332,-22]], spread: 14, density: 20 },
+  { points: [[30,162],[15,172],[2,185],[-8,198]], spread: 14, density: 22 },
+  { points: [[502,158],[515,168],[528,182],[538,198]], spread: 14, density: 22 },
+];
 
-    const dirX = Math.sin(a) * Math.cos(pitch);
-    const dirY = Math.sin(pitch);
-    const dirZ = Math.cos(a) * Math.cos(pitch);
-
-    const tip: [number, number, number] = [dirX * len, y + dirY * len, dirZ * len];
-
-    primary.push({
-      start: [0, y, 0],
-      rotation: [Math.PI / 2 - pitch, a, 0],
-      length: len,
-      thickness: 0.03 + hash(seed * (i + 6) * 23) * 0.03,
-      tip,
+function generateBlossomLeaves(count: number, rng: (i: number) => number) {
+  const pinks = [
+    [340, 70, 80], [335, 60, 85], [338, 65, 82], [340, 72, 78],
+    [335, 58, 88], [342, 55, 84], [337, 62, 80], [340, 68, 76],
+    [345, 50, 86], [340, 75, 75], [338, 60, 90], [342, 65, 78],
+  ];
+  const leaves: Array<{x:number;y:number;rx:number;ry:number;angle:number;fill:number[];opacity:number}> = [];
+  const totalDensity = branchPaths.reduce((s, b) => s + b.density, 0);
+  for (let i = 0; i < count; i++) {
+    let r = rng(i * 1.1) * totalDensity;
+    let branch = branchPaths[0];
+    for (const b of branchPaths) { r -= b.density; if (r <= 0) { branch = b; break; } }
+    const pts = branch.points;
+    const segIdx = Math.floor(rng(i * 2.2) * (pts.length - 1));
+    const t = rng(i * 3.3);
+    const px = pts[segIdx][0] + (pts[segIdx + 1][0] - pts[segIdx][0]) * t;
+    const py = pts[segIdx][1] + (pts[segIdx + 1][1] - pts[segIdx][1]) * t;
+    const dx = pts[segIdx + 1][0] - pts[segIdx][0];
+    const dy = pts[segIdx + 1][1] - pts[segIdx][1];
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const offset = (rng(i * 4.4) - 0.5) * 2 * branch.spread;
+    const x = px + nx * offset + (rng(i * 5.5) - 0.5) * 10;
+    const y = py + ny * offset + (rng(i * 6.6) - 0.5) * 10;
+    const angle = rng(i * 7.7) * 360;
+    const rx = 4 + rng(i * 8.8) * 7;
+    const ry = rx * (0.35 + rng(i * 9.9) * 0.2);
+    leaves.push({
+      x, y, rx, ry, angle,
+      fill: pinks[Math.floor(rng(i * 10.1) * pinks.length)],
+      opacity: 0.45 + rng(i * 11.2) * 0.45,
     });
+  }
+  return leaves;
+}
 
-    const secondaryCount = 2 + Math.floor(hash(seed * (i + 7) * 29) * 2);
-    for (let j = 0; j < secondaryCount; j++) {
-      const sa = a + (hash(seed * (i + 1) * (j + 1) * 31) - 0.5) * 1.25;
-      const sp = pitch + 0.18 + hash(seed * (i + 1) * (j + 1) * 37) * 0.3;
-      const sl = len * (0.34 + hash(seed * (i + 1) * (j + 1) * 41) * 0.35);
+const blossomClusters = [
+  { x: 230, y: 28, r: 18 }, { x: 250, y: 12, r: 16 }, { x: 205, y: 18, r: 15 },
+  { x: 275, y: 20, r: 14 }, { x: 188, y: -2, r: 14 }, { x: 298, y: 10, r: 13 },
+  { x: 242, y: 68, r: 17 }, { x: 260, y: 58, r: 14 },
+  { x: 98, y: 105, r: 22 }, { x: 68, y: 68, r: 19 }, { x: 142, y: 148, r: 17 },
+  { x: 130, y: 58, r: 16 }, { x: 55, y: 52, r: 14 }, { x: 42, y: 30, r: 13 },
+  { x: 408, y: 105, r: 22 }, { x: 435, y: 68, r: 19 }, { x: 358, y: 148, r: 17 },
+  { x: 378, y: 58, r: 16 }, { x: 450, y: 55, r: 14 }, { x: 468, y: 30, r: 13 },
+  { x: 72, y: 248, r: 26 }, { x: 115, y: 268, r: 20 }, { x: 42, y: 208, r: 19 },
+  { x: 30, y: 162, r: 18 }, { x: 152, y: 282, r: 19 }, { x: 18, y: 238, r: 17 },
+  { x: 445, y: 238, r: 26 }, { x: 482, y: 198, r: 20 }, { x: 508, y: 158, r: 18 },
+  { x: 382, y: 242, r: 18 }, { x: 492, y: 235, r: 15 },
+  { x: 195, y: 212, r: 19 }, { x: 312, y: 212, r: 18 }, { x: 252, y: 172, r: 17 },
+  { x: 225, y: 155, r: 15 }, { x: 280, y: 145, r: 15 }, { x: 175, y: 188, r: 15 },
+];
 
-      const sdx = Math.sin(sa) * Math.cos(sp);
-      const sdy = Math.sin(sp);
-      const sdz = Math.cos(sa) * Math.cos(sp);
+const createTreeTexture = (seed: number): THREE.CanvasTexture => {
+  const scale = 1.5;
+  const w = Math.round(TREE_SVG_WIDTH * scale);
+  const h = Math.round(TREE_SVG_HEIGHT * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(scale, scale);
+  // Offset to match viewBox "-80 -40 710 700"
+  ctx.translate(80, 40);
 
-      const start: [number, number, number] = [
-        tip[0] * 0.68,
-        y + (tip[1] - y) * 0.68,
-        tip[2] * 0.68,
-      ];
+  const rng = (n: number) => fract(Math.sin(n * 127.1 + seed * 311.7) * 43758.5453123);
+  
+  const hsl = (h: number, s: number, l: number) => `hsl(${h}, ${s}%, ${l}%)`;
+  const bark = (l: number) => hsl(25, 28, l);
 
-      secondary.push({
-        start,
-        rotation: [Math.PI / 2 - sp, sa, 0],
-        length: sl,
-        thickness: 0.012 + hash(seed * (i + 1) * (j + 1) * 43) * 0.018,
-        tip: [start[0] + sdx * sl, start[1] + sdy * sl, start[2] + sdz * sl],
-      });
-    }
+  // Root system
+  ctx.strokeStyle = bark(22); ctx.lineWidth = 11; ctx.lineCap = 'round';
+  const drawPath = (d: string) => {
+    const p = new Path2D(d);
+    ctx.stroke(p);
+  };
+  drawPath("M215 622 Q192 618 168 620 Q148 624 132 630");
+  ctx.lineWidth = 10;
+  drawPath("M285 622 Q308 618 332 620 Q352 624 368 630");
+  ctx.lineWidth = 6; ctx.strokeStyle = bark(24);
+  drawPath("M232 625 Q210 628 190 635");
+  ctx.lineWidth = 5;
+  drawPath("M268 625 Q290 628 308 632");
+
+  // Root ellipses
+  ctx.fillStyle = `hsla(25, 28%, 20%, 0.85)`;
+  ctx.beginPath(); ctx.ellipse(250, 620, 68, 15, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = `hsla(100, 28%, 35%, 0.4)`;
+  ctx.beginPath(); ctx.ellipse(250, 618, 48, 8, 0, 0, Math.PI * 2); ctx.fill();
+
+  // Main trunk
+  ctx.fillStyle = hsl(25, 30, 22);
+  const trunk = new Path2D("M232 622 Q226 580 222 540 Q216 490 210 440 Q204 395 206 355 Q210 315 216 282 Q220 255 226 228 Q230 210 232 195 L268 195 Q270 210 274 228 Q278 255 282 282 Q286 315 288 355 Q290 395 286 440 Q280 490 274 540 Q270 580 268 622 Z");
+  ctx.fill(trunk);
+  ctx.fillStyle = hsl(25, 28, 26);
+  const innerTrunk = new Path2D("M238 620 Q234 578 232 538 Q228 488 224 438 Q220 398 222 358 Q226 318 230 288 Q234 260 238 235 Q242 215 244 200 L256 200 Q258 215 262 235 Q266 260 268 288 Q272 318 274 358 Q276 398 272 438 Q268 488 264 538 Q260 578 258 620 Z");
+  ctx.fill(innerTrunk);
+
+  // Bark texture lines
+  ctx.strokeStyle = `hsla(25, 25%, 32%, 0.35)`; ctx.lineWidth = 9;
+  drawPath("M246 600 Q242 555 240 510 Q236 460 234 415 Q232 375 235 345");
+  ctx.strokeStyle = `hsla(25, 20%, 17%, 0.45)`; ctx.lineWidth = 2.5;
+  drawPath("M242 595 Q238 545 236 495 Q234 445 233 400");
+  ctx.strokeStyle = `hsla(25, 20%, 17%, 0.4)`; ctx.lineWidth = 2;
+  drawPath("M258 590 Q260 540 262 490 Q264 440 263 395");
+
+  // Knots
+  ctx.fillStyle = `hsla(25, 28%, 18%, 0.5)`;
+  ctx.beginPath(); ctx.ellipse(240, 430, 9, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = `hsla(25, 28%, 18%, 0.4)`;
+  ctx.beginPath(); ctx.ellipse(258, 365, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+  // Trunk fork
+  ctx.strokeStyle = hsl(25, 30, 22); ctx.lineWidth = 20; ctx.lineCap = 'round';
+  drawPath("M245 290 Q235 265 222 245 Q210 228 198 215 Q190 208 185 202");
+  ctx.lineWidth = 18;
+  drawPath("M255 290 Q265 265 278 245 Q290 228 302 215 Q310 208 315 202");
+
+  // All branches
+  const branches = [
+    // Left main
+    { d: "M228 350 Q200 325 172 305 Q142 288 112 272 Q85 258 58 250 Q35 244 18 245", w: 18, c: bark(23) },
+    { d: "M225 308 Q200 295 175 285 Q152 278 132 275 Q118 272 108 272", w: 9, c: bark(27) },
+    { d: "M155 295 Q138 278 118 275 Q98 278 82 288", w: 7, c: bark(28) },
+    { d: "M78 252 Q62 238 48 218 Q38 198 34 178 Q32 165 30 152", w: 7, c: bark(28) },
+    { d: "M78 255 Q65 268 55 282 Q48 292 44 300", w: 6, c: bark(28) },
+    { d: "M128 275 Q115 265 100 265 Q88 268 78 275", w: 5, c: bark(30) },
+    { d: "M18 242 Q5 232 -8 222 Q-15 215 -20 208", w: 4.5, c: bark(30) },
+    { d: "M18 248 Q8 262 2 275 Q-2 285 -5 292", w: 4, c: bark(30) },
+    { d: "M30 158 Q20 142 14 125 Q10 115 8 105", w: 3.5, c: bark(32) },
+    // Right main
+    { d: "M268 338 Q298 312 330 290 Q362 270 395 258 Q422 248 448 242 Q470 238 488 242", w: 16, c: bark(23) },
+    { d: "M272 302 Q298 285 325 272 Q348 260 372 250 Q388 245 398 242", w: 9, c: bark(27) },
+    { d: "M448 245 Q465 228 480 208 Q492 192 500 175 Q508 162 512 148", w: 7, c: bark(28) },
+    { d: "M452 248 Q465 258 475 268 Q482 275 488 282", w: 5, c: bark(28) },
+    { d: "M398 245 Q408 228 418 212 Q425 200 430 190", w: 5, c: bark(30) },
+    { d: "M512 152 Q518 138 522 122 Q525 112 526 102", w: 3.5, c: bark(32) },
+    // Upper left
+    { d: "M192 208 Q172 185 152 165 Q135 148 118 132 Q102 118 88 102 Q78 90 70 78 Q65 70 62 62", w: 12, c: bark(26) },
+    { d: "M98 108 Q82 90 68 72 Q55 55 48 42 Q42 32 38 22", w: 6, c: bark(28) },
+    { d: "M98 112 Q115 92 132 72 Q142 55 150 38 Q155 25 158 15", w: 6, c: bark(28) },
+    { d: "M62 68 Q50 52 40 38 Q32 25 28 15", w: 5, c: bark(30) },
+    { d: "M65 72 Q75 52 88 35 Q95 25 100 18", w: 4.5, c: bark(30) },
+    { d: "M243 148 Q228 132 215 122 Q205 115 195 110", w: 5, c: bark(30) },
+    // Upper right
+    { d: "M308 208 Q328 185 348 165 Q365 148 382 132 Q398 118 412 102 Q422 90 430 78 Q435 70 438 62", w: 11, c: bark(26) },
+    { d: "M412 108 Q428 90 442 72 Q455 55 465 42 Q472 30 478 20", w: 6, c: bark(28) },
+    { d: "M408 112 Q392 88 378 65 Q368 48 362 32 Q358 20 356 12", w: 6, c: bark(28) },
+    { d: "M438 68 Q448 52 458 38 Q465 28 470 18", w: 5, c: bark(30) },
+    { d: "M435 72 Q425 52 418 35 Q412 22 408 12", w: 4.5, c: bark(30) },
+    { d: "M245 148 Q262 128 278 118 Q290 112 300 108", w: 5, c: bark(30) },
+    // Center top
+    { d: "M250 218 Q248 188 245 158 Q243 130 241 105 Q239 82 237 62 Q235 45 233 32 Q231 22 230 12", w: 10, c: bark(26) },
+    { d: "M237 72 Q222 52 210 35 Q200 22 192 10 Q188 2 185 -8", w: 5, c: bark(30) },
+    { d: "M238 78 Q255 58 272 42 Q285 28 295 18 Q302 10 308 2", w: 5, c: bark(30) },
+    { d: "M248 210 Q230 198 212 190 Q202 188 195 185", w: 5, c: bark(30) },
+    { d: "M248 210 Q268 198 288 190 Q298 188 305 185", w: 5, c: bark(30) },
+    { d: "M240 112 Q220 100 200 92 Q190 90 182 88", w: 4, c: bark(30) },
+    { d: "M240 112 Q260 100 280 92 Q290 90 298 88", w: 4, c: bark(30) },
+    // Extra sub-branches
+    { d: "M142 152 Q125 142 108 138 Q98 138 92 140", w: 5, c: bark(30) },
+    { d: "M142 152 Q148 135 155 118 Q158 108 160 102", w: 4, c: bark(30) },
+    { d: "M358 152 Q375 142 392 138 Q402 138 408 140", w: 5, c: bark(30) },
+    { d: "M358 152 Q352 135 345 118 Q342 108 340 102", w: 4, c: bark(30) },
+    { d: "M18 238 Q-5 248 -25 262 Q-35 272 -40 278", w: 5, c: bark(28) },
+    { d: "M488 235 Q508 245 525 258 Q535 268 538 272", w: 5, c: bark(28) },
+    { d: "M45 240 Q28 252 15 268 Q8 278 5 282", w: 4, c: bark(30) },
+    { d: "M462 232 Q478 245 492 260 Q502 272 505 278", w: 4, c: bark(30) },
+    { d: "M115 262 Q100 248 82 238 Q72 234 68 232", w: 5, c: bark(30) },
+    { d: "M392 252 Q408 242 422 235 Q432 232 435 230", w: 5, c: bark(30) },
+    { d: "M155 288 Q145 302 138 318 Q135 328 132 332", w: 3.5, c: bark(32) },
+    { d: "M348 272 Q342 288 338 305 Q336 315 335 320", w: 3.5, c: bark(32) },
+    { d: "M30 162 Q15 172 2 185 Q-5 195 -8 198", w: 3, c: bark(32) },
+    { d: "M502 158 Q515 168 528 182 Q535 192 538 198", w: 3, c: bark(32) },
+  ];
+
+  for (const b of branches) {
+    ctx.strokeStyle = b.c;
+    ctx.lineWidth = b.w;
+    ctx.lineCap = 'round';
+    drawPath(b.d);
   }
 
-  return { primary, secondary };
+  // Blossom petals
+  const leaves = generateBlossomLeaves(3000, rng);
+  for (const l of leaves) {
+    ctx.save();
+    ctx.translate(l.x, l.y);
+    ctx.rotate((l.angle * Math.PI) / 180);
+    ctx.globalAlpha = l.opacity;
+    ctx.fillStyle = hsl(l.fill[0], l.fill[1], l.fill[2]);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, l.rx, l.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Blossom clusters with stamen
+  ctx.globalAlpha = 1;
+  for (const c of blossomClusters) {
+    const h1 = 340, s1 = 70, l1 = 80;
+    const h2 = 335, s2 = 60, l2 = 85;
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = hsl(h1, s1, l1);
+    ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = hsl(h2, s2, l2);
+    ctx.beginPath(); ctx.arc(c.x + c.r * 0.65, c.y - c.r * 0.45, c.r * 0.7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = hsl(h1, s1, l1);
+    ctx.beginPath(); ctx.arc(c.x - c.r * 0.55, c.y + c.r * 0.4, c.r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = hsl(h2, s2, l2);
+    ctx.beginPath(); ctx.arc(c.x + c.r * 0.25, c.y + c.r * 0.65, c.r * 0.45, 0, Math.PI * 2); ctx.fill();
+    // Stamen
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = hsl(45, 80, 70);
+    ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 0.14, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
 };
 
-const BlossomTree: React.FC<{ data: TreeData; leafTexture: THREE.Texture }> = ({ data, leafTexture }) => {
-  const treeRef = useRef<THREE.Group>(null);
+// A single 3D tree billboard that faces the camera
+const TreeBillboard: React.FC<{
+  position: [number, number, number];
+  scale: number;
+  seed: number;
+}> = ({ position, scale: s, seed }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const texture = useMemo(() => createTreeTexture(seed), [seed]);
 
-  const structure = useMemo(() => buildTreeBranches(data.seed), [data.seed]);
-
-  const leaves = useMemo(() => {
-    const anchors = [...structure.primary.map((b) => b.tip), ...structure.secondary.map((b) => b.tip)];
-
-    return Array.from({ length: 88 }, (_, i) => {
-      const anchor = anchors[i % anchors.length] ?? [0, 2.2, 0];
-      const ox = (hash(data.seed * (i + 1) * 47) - 0.5) * 0.95;
-      const oy = (hash(data.seed * (i + 1) * 53) - 0.5) * 0.7;
-      const oz = (hash(data.seed * (i + 1) * 59) - 0.5) * 0.95;
-      const size = 0.18 + hash(data.seed * (i + 1) * 61) * 0.22;
-      const hue = 330 + hash(data.seed * (i + 1) * 67) * 18;
-      const sat = 68 + hash(data.seed * (i + 1) * 71) * 18;
-      const light = 72 + hash(data.seed * (i + 1) * 73) * 18;
-
-      return {
-        position: [anchor[0] + ox, anchor[1] + oy, anchor[2] + oz] as [number, number, number],
-        rotation: [
-          hash(data.seed * (i + 1) * 79) * Math.PI,
-          hash(data.seed * (i + 1) * 83) * Math.PI,
-          hash(data.seed * (i + 1) * 89) * Math.PI,
-        ] as [number, number, number],
-        size,
-        color: [hue, sat, light] as HslTriplet,
-      };
-    });
-  }, [data.seed, structure]);
-
+  // Gentle sway
   useFrame(({ clock }) => {
-    if (!treeRef.current) return;
-    const sway = Math.sin(clock.elapsedTime * 0.5 + data.seed * 7.4) * 0.02;
-    treeRef.current.rotation.z = sway;
-    treeRef.current.rotation.x = Math.cos(clock.elapsedTime * 0.22 + data.seed * 4.8) * 0.008;
+    if (!meshRef.current) return;
+    const t = clock.elapsedTime;
+    meshRef.current.rotation.z = Math.sin(t * 0.5 + seed * 7) * 0.015;
   });
 
+  const aspect = TREE_SVG_WIDTH / TREE_SVG_HEIGHT;
+  const h = 8 * s;
+  const w = h * aspect;
+
   return (
-    <group ref={treeRef} position={data.position} scale={[data.scale, data.scale, data.scale]}>
-      <mesh position={[0, 1.12, 0]}>
-        <cylinderGeometry args={[0.085, 0.19, 2.5, 10]} />
-        <meshStandardMaterial color={toColor(24, 40, 23)} roughness={0.95} />
-      </mesh>
+    <mesh ref={meshRef} position={position}>
+      <planeGeometry args={[w, h]} />
+      <meshBasicMaterial
+        map={texture}
+        transparent
+        alphaTest={0.05}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+};
 
-      <mesh position={[0, 2.24, 0]}>
-        <cylinderGeometry args={[0.038, 0.085, 1.15, 8]} />
-        <meshStandardMaterial color={toColor(24, 36, 24)} roughness={0.93} />
-      </mesh>
+const TreeRows: React.FC = () => {
+  const trees = useMemo(() => {
+    const items: { position: [number, number, number]; scale: number; seed: number }[] = [];
+    for (let i = 0; i < 18; i++) {
+      const z = 10 - i * 7;
+      const leftX = -(8 + hash(i * 13 + 1) * 4);
+      const rightX = 8 + hash(i * 13 + 2) * 4;
+      const yBase = 0.5;
 
-      {structure.primary.map((branch, i) => (
-        <group key={`p-${i}`} position={branch.start} rotation={branch.rotation}>
-          <mesh position={[0, branch.length * 0.5, 0]}>
-            <cylinderGeometry args={[branch.thickness * 0.62, branch.thickness, branch.length, 7]} />
-            <meshStandardMaterial color={toColor(23, 35, 25)} roughness={0.92} />
-          </mesh>
-        </group>
-      ))}
+      items.push({
+        position: [leftX, yBase, z + (hash(i * 17 + 3) - 0.5) * 2],
+        scale: 0.8 + hash(i * 19 + 4) * 0.4,
+        seed: i * 3.7 + 1,
+      });
+      items.push({
+        position: [rightX, yBase, z + (hash(i * 17 + 33) - 0.5) * 2],
+        scale: 0.8 + hash(i * 19 + 34) * 0.4,
+        seed: i * 3.7 + 100,
+      });
+    }
+    return items;
+  }, []);
 
-      {structure.secondary.map((branch, i) => (
-        <group key={`s-${i}`} position={branch.start} rotation={branch.rotation}>
-          <mesh position={[0, branch.length * 0.5, 0]}>
-            <cylinderGeometry args={[branch.thickness * 0.58, branch.thickness, branch.length, 6]} />
-            <meshStandardMaterial color={toColor(23, 32, 27)} roughness={0.92} />
-          </mesh>
-        </group>
-      ))}
-
-      {leaves.map((leaf, i) => (
-        <mesh key={`l-${i}`} position={leaf.position} rotation={leaf.rotation}>
-          <planeGeometry args={[leaf.size * 1.1, leaf.size * 1.55]} />
-          <meshStandardMaterial
-            map={leafTexture}
-            color={toColor(leaf.color[0], leaf.color[1], leaf.color[2])}
-            transparent
-            opacity={0.95}
-            alphaTest={0.14}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
+  return (
+    <group>
+      {trees.map((tree, i) => (
+        <TreeBillboard key={i} position={tree.position} scale={tree.scale} seed={tree.seed} />
       ))}
     </group>
   );
 };
-
-// Trees removed - using SVG PlumBlossomTree overlay instead
 
 const WindPetals: React.FC<{ isTransitioning: boolean; petalTexture: THREE.Texture }> = ({ isTransitioning, petalTexture }) => {
   const groupRef = useRef<THREE.Group>(null);
@@ -638,7 +837,7 @@ const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, i
 
 const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
   const cloudTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 0.96, midOpacity: 0.35, edgeOpacity: 0, shape: 'cloud' }), []);
-  const leafTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 1, midOpacity: 0.3, edgeOpacity: 0, shape: 'leaf' }), []);
+  // leafTexture no longer needed for trees
   const petalTexture = useMemo(() => createSoftSpriteTexture({ centerOpacity: 1, midOpacity: 0.22, edgeOpacity: 0, shape: 'leaf' }), []);
 
   return (
@@ -656,7 +855,7 @@ const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isT
       <MountainRange />
       <RiverBanks />
       <FlowingRiver />
-      {/* Trees removed - using SVG overlay */}
+      <TreeRows />
       <AtmosphericMist />
       <WindPetals isTransitioning={isTransitioning} petalTexture={petalTexture} />
 
