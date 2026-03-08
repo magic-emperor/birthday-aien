@@ -267,33 +267,35 @@ const MountainRange: React.FC = () => (
 // ===== DENSE GRASS FIELD using InstancedMesh for performance =====
 const GrassField: React.FC = () => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const BLADE_COUNT = 8000;
+  const BLADE_COUNT = 25000;
+  const ANIMATED_COUNT = 4000;
 
   const { matrix, bladeData } = useMemo(() => {
     const dummy = new THREE.Object3D();
     const matrix = new Float32Array(BLADE_COUNT * 16);
-    const bladeData: Array<{ lean: number; phase: number; speed: number; idx: number }> = [];
+    const bladeData: Array<{ lean: number; phase: number; speed: number }> = [];
 
     for (let i = 0; i < BLADE_COUNT; i++) {
       const side = hash(i * 2.1) > 0.5 ? 1 : -1;
-      const x = side * (12 + hash(i * 3.1) * 28);
-      const z = -150 + hash(i * 5.7) * 210;
-      const height = 0.35 + hash(i * 7.3) * 0.9;
-      const lean = (hash(i * 11.3) - 0.5) * 0.35;
+      const x = side * (10 + hash(i * 3.1) * 32);
+      const z = -155 + hash(i * 5.7) * 220;
+      const height = 0.3 + hash(i * 7.3) * 0.85;
+      const lean = (hash(i * 11.3) - 0.5) * 0.3;
       const rotY = hash(i * 23.1) * Math.PI;
 
       dummy.position.set(x, -2.85 + height * 0.5, z);
       dummy.rotation.set(0, rotY, lean);
-      dummy.scale.set(0.08 + hash(i * 9.1) * 0.06, height, 1);
+      dummy.scale.set(0.07 + hash(i * 9.1) * 0.05, height, 1);
       dummy.updateMatrix();
       dummy.matrix.toArray(matrix, i * 16);
 
-      bladeData.push({
-        lean,
-        phase: hash(i * 19.3) * Math.PI * 2,
-        speed: 1.2 + hash(i * 21.7) * 1.5,
-        idx: i,
-      });
+      if (i < ANIMATED_COUNT) {
+        bladeData.push({
+          lean,
+          phase: hash(i * 19.3) * Math.PI * 2,
+          speed: 1.0 + hash(i * 21.7) * 1.8,
+        });
+      }
     }
     return { matrix, bladeData };
   }, []);
@@ -318,19 +320,20 @@ const GrassField: React.FC = () => {
     const scale = new THREE.Vector3();
     const quat = new THREE.Quaternion();
 
-    // Only update a subset each frame for performance
-    const batchSize = 2000;
-    const offset = (Math.floor(t * 20) % 4) * batchSize;
+    // Animate only first ANIMATED_COUNT blades, in batches
+    const batchSize = 1000;
+    const batches = Math.ceil(ANIMATED_COUNT / batchSize);
+    const batchIdx = Math.floor(t * 15) % batches;
+    const start = batchIdx * batchSize;
+    const end = Math.min(start + batchSize, ANIMATED_COUNT);
 
-    for (let j = 0; j < batchSize; j++) {
-      const i = offset + j;
-      if (i >= BLADE_COUNT) break;
+    for (let i = start; i < end; i++) {
       const blade = bladeData[i];
       m.fromArray(matrix, i * 16);
       m.decompose(pos, quat, scale);
 
-      const sway = Math.sin(t * blade.speed + blade.phase) * 0.18 +
-                   Math.sin(t * 0.6 + blade.phase * 1.3 + pos.x * 0.1) * 0.1;
+      const sway = Math.sin(t * blade.speed + blade.phase) * 0.16 +
+                   Math.sin(t * 0.5 + blade.phase * 1.3 + pos.x * 0.08) * 0.09;
 
       dummy.position.copy(pos);
       dummy.scale.copy(scale);
@@ -344,6 +347,7 @@ const GrassField: React.FC = () => {
   // Create varied green colors per instance
   const colors = useMemo(() => {
     const arr = new Float32Array(BLADE_COUNT * 3);
+    const tempColor = new THREE.Color();
     for (let i = 0; i < BLADE_COUNT; i++) {
       const c = toColor(
         90 + hash(i * 13.7) * 40,
