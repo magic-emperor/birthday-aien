@@ -523,39 +523,7 @@ const BlossomTree: React.FC<{ data: TreeData; leafTexture: THREE.Texture }> = ({
   );
 };
 
-const TreeRows: React.FC<{ leafTexture: THREE.Texture }> = ({ leafTexture }) => {
-  const trees = useMemo<TreeData[]>(() => {
-    const items: TreeData[] = [];
-
-    for (let i = 0; i < 24; i++) {
-      const z = 12 - i * 6.2;
-      const leftX = -(7 + hash(i * 13 + 1) * 3.1);
-      const rightX = 7 + hash(i * 13 + 2) * 3.1;
-
-      items.push({
-        position: [leftX, -3.2, z + (hash(i * 17 + 3) - 0.5) * 2],
-        scale: 0.98 + hash(i * 19 + 4) * 0.5,
-        seed: hash(i * 23 + 5),
-      });
-
-      items.push({
-        position: [rightX, -3.2, z + (hash(i * 17 + 33) - 0.5) * 2],
-        scale: 0.98 + hash(i * 19 + 34) * 0.5,
-        seed: hash(i * 23 + 35),
-      });
-    }
-
-    return items;
-  }, []);
-
-  return (
-    <group>
-      {trees.map((tree, i) => (
-        <BlossomTree key={i} data={tree} leafTexture={leafTexture} />
-      ))}
-    </group>
-  );
-};
+// Trees removed - using SVG PlumBlossomTree overlay instead
 
 const WindPetals: React.FC<{ isTransitioning: boolean; petalTexture: THREE.Texture }> = ({ isTransitioning, petalTexture }) => {
   const groupRef = useRef<THREE.Group>(null);
