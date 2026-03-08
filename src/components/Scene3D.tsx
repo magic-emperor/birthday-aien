@@ -8,21 +8,7 @@ interface SceneProps {
   isTransitioning: boolean;
 }
 
-type TreeData = {
-  position: [number, number, number];
-  scale: number;
-  seed: number;
-};
-
 type HslTriplet = [number, number, number];
-
-type BranchSegment = {
-  start: [number, number, number];
-  rotation: [number, number, number];
-  length: number;
-  thickness: number;
-  tip: [number, number, number];
-};
 
 const toColor = (h: number, s: number, l: number) => new THREE.Color().setHSL(h / 360, s / 100, l / 100);
 const fract = (n: number) => n - Math.floor(n);
