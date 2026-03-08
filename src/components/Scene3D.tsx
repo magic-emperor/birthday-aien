@@ -1225,11 +1225,11 @@ const ReactiveCamera: React.FC<SceneProps> = ({ currentSection, totalSections, i
 const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
   const groupRef = useRef<THREE.Group>(null);
   const stars = useMemo(() =>
-    Array.from({ length: 120 }, (_, i) => ({
-      x: (hash(i * 2.3) - 0.5) * 300,
-      y: 30 + hash(i * 4.7) * 100,
-      z: -180 + hash(i * 6.1) * 100,
-      size: 0.1 + hash(i * 8.3) * 0.2,
+    Array.from({ length: 250 }, (_, i) => ({
+      x: (hash(i * 2.3) - 0.5) * 350,
+      y: 25 + hash(i * 4.7) * 130,
+      z: -190 + hash(i * 6.1) * 80,
+      size: 0.12 + hash(i * 8.3) * 0.35,
       twinkleSpeed: 1 + hash(i * 10.7) * 3,
       phase: hash(i * 12.1) * Math.PI * 2,
     })), []
@@ -1242,8 +1242,8 @@ const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
       const s = stars[i];
       if (!s) return;
       const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      const targetOpacity = isNight ? (0.4 + Math.sin(t * s.twinkleSpeed + s.phase) * 0.6) : 0;
-      mat.opacity += (targetOpacity - mat.opacity) * 0.05;
+      const targetOpacity = isNight ? (0.5 + Math.sin(t * s.twinkleSpeed + s.phase) * 0.5) : 0;
+      mat.opacity += (targetOpacity - mat.opacity) * 0.08;
     });
   });
 
@@ -1252,7 +1252,7 @@ const NightStars: React.FC<{ isNight: boolean }> = ({ isNight }) => {
       {stars.map((s, i) => (
         <mesh key={i} position={[s.x, s.y, s.z]}>
           <sphereGeometry args={[s.size, 4, 4]} />
-          <meshBasicMaterial color={toColor(45, 20, 95)} transparent opacity={0} />
+          <meshBasicMaterial color={toColor(45, 15, 98)} transparent opacity={0} />
         </mesh>
       ))}
     </group>
