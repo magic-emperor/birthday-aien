@@ -1,7 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import playlist, { Song } from '@/data/playlist';
+
+function extractYoutubeId(input: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const p of patterns) {
+    const m = input.trim().match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
 
 const MusicPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,11 +21,21 @@ const MusicPage: React.FC = () => {
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const isYoutubeUrl = useMemo(() => extractYoutubeId(searchQuery) !== null, [searchQuery]);
+
+  const handlePlayUrl = useCallback(() => {
+    const id = extractYoutubeId(searchQuery);
+    if (id) {
+      const song: Song = { name: 'YouTube Video', artist: 'From URL', youtubeId: id, emoji: '🔗' };
+      setCurrentSong(song);
+    }
+  }, [searchQuery]);
+
   const filteredPlaylist = useMemo(() => {
-    if (!searchQuery.trim()) return playlist;
+    if (!searchQuery.trim() || isYoutubeUrl) return playlist;
     const q = searchQuery.toLowerCase();
     return playlist.filter(s => s.name.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
-  }, [searchQuery]);
+  }, [searchQuery, isYoutubeUrl]);
 
   const audioBars = useMemo(() =>
     Array.from({ length: 24 }, (_, i) => ({
@@ -71,19 +93,30 @@ const MusicPage: React.FC = () => {
           <div className="relative max-w-md mx-auto">
             <input
               type="text"
-              placeholder="🔍 Search songs or artists..."
+              placeholder="🔍 Search songs or paste YouTube link..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:bg-white/8 transition-all backdrop-blur-md"
+              onKeyDown={(e) => e.key === 'Enter' && isYoutubeUrl && handlePlayUrl()}
+              className="w-full px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:bg-white/8 transition-all backdrop-blur-md pr-20"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-xs"
-              >
-                ✕
-              </button>
-            )}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {isYoutubeUrl && (
+                <button
+                  onClick={handlePlayUrl}
+                  className="px-3 py-1 rounded-lg bg-gradient-to-r from-[hsl(310,45%,55%)] to-[hsl(330,60%,65%)] text-white text-xs font-body hover:opacity-90 transition-all"
+                >
+                  ▶ Play
+                </button>
+              )}
+              {searchQuery && !isYoutubeUrl && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-white/30 hover:text-white/60 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

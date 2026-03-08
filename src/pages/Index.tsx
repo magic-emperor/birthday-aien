@@ -251,6 +251,23 @@ const Index = () => {
         ))}
       </div>
 
+      {/* Nav links */}
+      <a
+        href="/capsule"
+        className="fixed top-6 right-[14.5rem] z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label="Memory Capsule"
+        style={{ pointerEvents: 'auto' }}
+      >
+        💌
+      </a>
+      <a
+        href="/dreams"
+        className="fixed top-6 right-[11.5rem] z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label="Dream Board"
+        style={{ pointerEvents: 'auto' }}
+      >
+        ✨
+      </a>
       {/* Chat viewer link */}
       <a
         href="/our-chats"
