@@ -354,12 +354,13 @@ const FlowingRiver: React.FC = () => {
       for (let i = 0; i < pos.count; i++) {
         const x = base[i * 3];
         const z = base[i * 3 + 1];
-        const waveA = Math.sin(z * 0.17 + t * 1.6) * 0.14;
-        const waveB = Math.cos(x * 0.65 - t * 0.9) * 0.09;
-        const waveC = Math.sin((x + z) * 0.11 + t * 1.25) * 0.06;
-        const ripple = Math.sin(x * 2.5 + z * 1.8 + t * 3.2) * 0.02;
-        const flow = Math.sin((z + t * 6) * 0.052) * 0.04;
-        arr[i * 3 + 2] = waveA + waveB + waveC + ripple + flow;
+        const waveA = Math.sin(z * 0.14 + t * 1.4) * 0.35;
+        const waveB = Math.cos(x * 0.5 - t * 0.8) * 0.22;
+        const waveC = Math.sin((x + z) * 0.09 + t * 1.1) * 0.15;
+        const ripple = Math.sin(x * 2.0 + z * 1.5 + t * 2.8) * 0.06;
+        const flow = Math.sin((z + t * 5) * 0.045) * 0.1;
+        const swell = Math.sin(z * 0.04 + t * 0.6) * 0.18;
+        arr[i * 3 + 2] = waveA + waveB + waveC + ripple + flow + swell;
       }
       pos.needsUpdate = true;
       riverRef.current.geometry.computeVertexNormals();
