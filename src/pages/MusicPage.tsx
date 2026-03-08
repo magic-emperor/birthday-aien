@@ -2,15 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const YOUTUBE_API_KEY = ''; // Add your YouTube Data API v3 key here for search
-
-interface SearchResult {
-  videoId: string;
-  title: string;
-  thumbnail: string;
-  channel: string;
-}
-
 const extractVideoId = (url: string): string | null => {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
@@ -26,11 +17,7 @@ const extractVideoId = (url: string): string | null => {
 const MusicPage: React.FC = () => {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [mode, setMode] = useState<'paste' | 'search'>('paste');
   const [error, setError] = useState('');
 
   const handlePaste = useCallback(() => {
@@ -40,41 +27,9 @@ const MusicPage: React.FC = () => {
       setCurrentVideoId(id);
       setUrl('');
     } else {
-      setError('Invalid YouTube URL. Try pasting a link like https://youtube.com/watch?v=...');
+      setError('Hmm, that doesn\'t look right. Try a link like https://youtube.com/watch?v=...');
     }
   }, [url]);
-
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) return;
-    if (!YOUTUBE_API_KEY) {
-      setError('YouTube API key not configured. Use the paste URL tab instead, or add a YouTube Data API v3 key in MusicPage.tsx');
-      return;
-    }
-    setIsSearching(true);
-    setError('');
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(searchQuery)}&key=${YOUTUBE_API_KEY}`
-      );
-      const data = await res.json();
-      if (data.items) {
-        setSearchResults(
-          data.items.map((item: any) => ({
-            videoId: item.id.videoId,
-            title: item.snippet.title,
-            thumbnail: item.snippet.thumbnails.medium.url,
-            channel: item.snippet.channelTitle,
-          }))
-        );
-      } else {
-        setError(data.error?.message || 'Search failed');
-      }
-    } catch {
-      setError('Failed to search. Check your connection.');
-    } finally {
-      setIsSearching(false);
-    }
-  }, [searchQuery]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-[hsl(230,40%,8%)] via-[hsl(225,35%,12%)] to-[hsl(220,30%,6%)] overflow-y-auto">
@@ -104,100 +59,44 @@ const MusicPage: React.FC = () => {
         >
           ← Back
         </button>
-        <h1 className="text-xl md:text-2xl font-display text-white/90">🎵 Music Corner</h1>
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 pb-12">
-        {/* Mode toggle */}
-        <div className="flex gap-2 mb-6">
+        {/* Title & message */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl md:text-4xl font-display text-white/90 mb-3">🎵 Your Song, Your Moment</h1>
+          <p className="text-white/50 font-body text-sm md:text-base italic leading-relaxed max-w-md mx-auto">
+            Aien, pick a song that makes your heart smile — paste it here and let the music play while my love wraps around every note ♥
+          </p>
+        </motion.div>
+
+        {/* Paste input */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex gap-2 mb-6"
+        >
+          <input
+            type="text"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handlePaste()}
+            placeholder="Paste a YouTube link here..."
+            className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 font-body text-sm focus:outline-none focus:border-white/30 transition-colors"
+          />
           <button
-            onClick={() => { setMode('paste'); setError(''); }}
-            className={`px-5 py-2.5 rounded-full text-sm font-body transition-all ${
-              mode === 'paste'
-                ? 'bg-white/20 text-white border border-white/20'
-                : 'bg-white/5 text-white/50 border border-white/5 hover:bg-white/10'
-            }`}
+            onClick={handlePaste}
+            className="px-6 py-3 rounded-xl bg-white/15 border border-white/15 text-white text-sm font-body hover:bg-white/25 transition-all"
           >
-            🔗 Paste URL
+            Play ▶
           </button>
-          <button
-            onClick={() => { setMode('search'); setError(''); }}
-            className={`px-5 py-2.5 rounded-full text-sm font-body transition-all ${
-              mode === 'search'
-                ? 'bg-white/20 text-white border border-white/20'
-                : 'bg-white/5 text-white/50 border border-white/5 hover:bg-white/10'
-            }`}
-          >
-            🔍 Search
-          </button>
-        </div>
-
-        {/* Paste mode */}
-        {mode === 'paste' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex gap-2 mb-6"
-          >
-            <input
-              type="text"
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handlePaste()}
-              placeholder="Paste a YouTube link here..."
-              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 font-body text-sm focus:outline-none focus:border-white/30 transition-colors"
-            />
-            <button
-              onClick={handlePaste}
-              className="px-6 py-3 rounded-xl bg-white/15 border border-white/15 text-white text-sm font-body hover:bg-white/25 transition-all"
-            >
-              Play
-            </button>
-          </motion.div>
-        )}
-
-        {/* Search mode */}
-        {mode === 'search' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                placeholder="Search for a song..."
-                className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 font-body text-sm focus:outline-none focus:border-white/30 transition-colors"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="px-6 py-3 rounded-xl bg-white/15 border border-white/15 text-white text-sm font-body hover:bg-white/25 transition-all disabled:opacity-50"
-              >
-                {isSearching ? '...' : 'Search'}
-              </button>
-            </div>
-
-            {/* Search results */}
-            <div className="space-y-2 mb-6">
-              {searchResults.map((r) => (
-                <button
-                  key={r.videoId}
-                  onClick={() => { setCurrentVideoId(r.videoId); setSearchResults([]); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-left"
-                >
-                  <img src={r.thumbnail} alt="" className="w-24 h-16 rounded-lg object-cover flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm text-white/90 font-body truncate" dangerouslySetInnerHTML={{ __html: r.title }} />
-                    <p className="text-xs text-white/40 font-body">{r.channel}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
+        </motion.div>
 
         {/* Error */}
         {error && (
@@ -228,12 +127,17 @@ const MusicPage: React.FC = () => {
         </AnimatePresence>
 
         {!currentVideoId && (
-          <div className="text-center py-20">
-            <p className="text-6xl mb-4">🎶</p>
-            <p className="text-white/40 font-body text-sm">
-              Paste a YouTube link or search for your favorite song
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-center py-16"
+          >
+            <p className="text-5xl mb-4">🎶</p>
+            <p className="text-white/30 font-body text-xs">
+              Find your song on YouTube, copy the link, and paste it above
             </p>
-          </div>
+          </motion.div>
         )}
       </div>
 
