@@ -6,6 +6,7 @@ interface SceneProps {
   currentSection: number;
   totalSections: number;
   isTransitioning: boolean;
+  isNight?: boolean;
 }
 
 type HslTriplet = [number, number, number];
