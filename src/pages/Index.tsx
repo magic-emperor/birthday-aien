@@ -49,11 +49,11 @@ const Index = () => {
       if (sectionContentRef.current) {
         sectionContentRef.current.scrollTop = 0;
       }
-    }, 400);
+    }, 600);
 
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 1200);
+    }, 1800);
   }, [currentSection, isTransitioning]);
 
   // Wheel handler — navigate sections when content is at boundary
