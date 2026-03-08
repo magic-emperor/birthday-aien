@@ -175,7 +175,7 @@ const Index = () => {
   return (
     <>
       {/* 3D Background with tree */}
-      <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} />
+      <Scene3D currentSection={currentSection} totalSections={SECTIONS.length} isTransitioning={isTransitioning} isNight={isNight} />
 
       {/* Falling petals overlay */}
       <FallingPetals />
