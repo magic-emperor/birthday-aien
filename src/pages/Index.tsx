@@ -192,7 +192,7 @@ const Index = () => {
             style={{ transformStyle: 'preserve-3d' }}
           >
             {/* Semi-transparent backdrop so scene is visible but text remains clear */}
-            <div className={`absolute inset-0 backdrop-blur-sm transition-colors duration-1000 ${isNight ? 'bg-background/30' : 'bg-background/60'}`} />
+            <div className={`absolute inset-0 transition-all duration-1000 ${isNight ? 'bg-black/70 backdrop-blur-md' : 'bg-background/60 backdrop-blur-sm'}`} />
 
             {/* Scrollable content container */}
             <div
