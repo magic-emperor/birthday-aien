@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      dreams: {
+        Row: {
+          category: string
+          created_at: string
+          done: boolean
+          emoji: string
+          id: string
+          text: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          done?: boolean
+          emoji?: string
+          id?: string
+          text: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          done?: boolean
+          emoji?: string
+          id?: string
+          text?: string
+        }
+        Relationships: []
+      }
       memory_capsules: {
         Row: {
           created_at: string

@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Dream {
   id: string;
@@ -8,7 +9,7 @@ interface Dream {
   emoji: string;
   category: string;
   done: boolean;
-  createdAt: number;
+  created_at: string;
 }
 
 const CATEGORIES = [
@@ -20,73 +21,57 @@ const CATEGORIES = [
   { label: 'Together', emoji: '💑' },
 ];
 
-const STORAGE_KEY = 'dream-board-items';
-
-function loadDreams(): Dream[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : getDefaultDreams();
-  } catch { return getDefaultDreams(); }
-}
-
-function saveDreams(dreams: Dream[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dreams));
-}
-
-function getDefaultDreams(): Dream[] {
-  return [
-    { id: '1', text: 'Watch the Northern Lights together', emoji: '🌌', category: 'Travel', done: false, createdAt: Date.now() },
-    { id: '2', text: 'Cook a full meal together from scratch', emoji: '👨‍🍳', category: 'Food', done: false, createdAt: Date.now() },
-    { id: '3', text: 'Take a road trip with no destination', emoji: '🚗', category: 'Adventure', done: false, createdAt: Date.now() },
-    { id: '4', text: 'Stargaze on a hilltop', emoji: '⭐', category: 'Together', done: false, createdAt: Date.now() },
-    { id: '5', text: 'Visit Paris together', emoji: '🗼', category: 'Travel', done: false, createdAt: Date.now() },
-    { id: '6', text: 'Learn to dance together', emoji: '💃', category: 'Experience', done: false, createdAt: Date.now() },
-  ];
-}
-
 const DreamBoardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [dreams, setDreams] = useState<Dream[]>(loadDreams);
+  const [dreams, setDreams] = useState<Dream[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [newText, setNewText] = useState('');
   const [newCategory, setNewCategory] = useState('Together');
   const [newEmoji, setNewEmoji] = useState('💫');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
 
-  const update = useCallback((updated: Dream[]) => {
-    setDreams(updated);
-    saveDreams(updated);
-  }, []);
-
-  const toggleDone = (id: string) => {
-    update(dreams.map(d => d.id === id ? { ...d, done: !d.done } : d));
+  const fetchDreams = async () => {
+    const { data } = await supabase
+      .from('dreams')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setDreams(data as Dream[]);
+    setLoading(false);
   };
 
-  const addDream = () => {
+  useEffect(() => { fetchDreams(); }, []);
+
+  const toggleDone = async (id: string) => {
+    const dream = dreams.find(d => d.id === id);
+    if (!dream) return;
+    await supabase.from('dreams').update({ done: !dream.done }).eq('id', id);
+    setDreams(prev => prev.map(d => d.id === id ? { ...d, done: !d.done } : d));
+  };
+
+  const addDream = async () => {
     if (!newText.trim()) return;
-    const dream: Dream = {
-      id: Date.now().toString(),
+    await supabase.from('dreams').insert({
       text: newText.trim(),
       emoji: newEmoji,
       category: newCategory,
-      done: false,
-      createdAt: Date.now(),
-    };
-    update([dream, ...dreams]);
+    });
     setNewText('');
     setNewEmoji('💫');
     setShowAdd(false);
+    fetchDreams();
   };
 
-  const deleteDream = (id: string) => {
-    update(dreams.filter(d => d.id !== id));
+  const deleteDream = async (id: string) => {
+    await supabase.from('dreams').delete().eq('id', id);
+    setDreams(prev => prev.filter(d => d.id !== id));
   };
 
-  const filtered = dreams.filter(d => {
+  const filtered = useMemo(() => dreams.filter(d => {
     if (filter === 'todo') return !d.done;
     if (filter === 'done') return d.done;
     return true;
-  });
+  }), [dreams, filter]);
 
   const doneCount = dreams.filter(d => d.done).length;
   const progress = dreams.length > 0 ? (doneCount / dreams.length) * 100 : 0;
@@ -205,48 +190,54 @@ const DreamBoardPage: React.FC = () => {
         </AnimatePresence>
 
         {/* Dream cards */}
-        <div className="grid gap-3">
-          <AnimatePresence>
-            {filtered.map((dream, i) => (
-              <motion.div
-                key={dream.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20, height: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className={`group flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                  dream.done
-                    ? 'bg-white/5 border-white/5 opacity-60'
-                    : 'bg-white/8 border-white/10 hover:bg-white/12 hover:border-white/15'
-                }`}
-              >
-                <button
-                  onClick={() => toggleDone(dream.id)}
-                  className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                    dream.done ? 'border-white/30 bg-white/15 text-white/80' : 'border-white/20 hover:border-white/40'
+        {loading ? (
+          <div className="text-center py-16">
+            <p className="text-white/30 font-body text-sm">Loading dreams...</p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            <AnimatePresence>
+              {filtered.map((dream, i) => (
+                <motion.div
+                  key={dream.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20, height: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className={`group flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                    dream.done
+                      ? 'bg-white/5 border-white/5 opacity-60'
+                      : 'bg-white/8 border-white/10 hover:bg-white/12 hover:border-white/15'
                   }`}
                 >
-                  {dream.done && <span className="text-xs">✓</span>}
-                </button>
-                <span className="text-xl flex-shrink-0">{dream.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-body ${dream.done ? 'line-through text-white/40' : 'text-white/80'}`}>
-                    {dream.text}
-                  </p>
-                  <p className="text-xs text-white/25 font-body mt-0.5">{dream.category}</p>
-                </div>
-                <button
-                  onClick={() => deleteDream(dream.id)}
-                  className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-white/50 text-xs transition-all"
-                >
-                  ✕
-                </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                  <button
+                    onClick={() => toggleDone(dream.id)}
+                    className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                      dream.done ? 'border-white/30 bg-white/15 text-white/80' : 'border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    {dream.done && <span className="text-xs">✓</span>}
+                  </button>
+                  <span className="text-xl flex-shrink-0">{dream.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-body ${dream.done ? 'line-through text-white/40' : 'text-white/80'}`}>
+                      {dream.text}
+                    </p>
+                    <p className="text-xs text-white/25 font-body mt-0.5">{dream.category}</p>
+                  </div>
+                  <button
+                    onClick={() => deleteDream(dream.id)}
+                    className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-white/50 text-xs transition-all"
+                  >
+                    ✕
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">{filter === 'done' ? '🌟' : '🌙'}</p>
             <p className="text-white/30 font-body text-sm">
