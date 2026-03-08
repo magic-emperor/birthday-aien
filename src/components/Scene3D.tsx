@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Stars } from '@react-three/drei';
+import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface SceneProps {
@@ -9,23 +9,106 @@ interface SceneProps {
   isTransitioning: boolean;
 }
 
-const Lantern: React.FC<{ position: [number, number, number]; color: string; speed?: number }> = ({ position, color, speed = 1 }) => {
+// Plum blossom petal shape
+const PetalGeometry: React.FC = () => {
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.bezierCurveTo(0.06, 0.1, 0.12, 0.15, 0.08, 0.25);
+    shape.bezierCurveTo(0.04, 0.3, -0.04, 0.3, -0.08, 0.25);
+    shape.bezierCurveTo(-0.12, 0.15, -0.06, 0.1, 0, 0);
+    const geo = new THREE.ShapeGeometry(shape);
+    return geo;
+  }, []);
+
+  return <primitive object={geometry} attach="geometry" />;
+};
+
+const FallingPetal: React.FC<{
+  position: [number, number, number];
+  color: string;
+  speed: number;
+  swayAmount: number;
+  rotSpeed: number;
+  delay: number;
+}> = ({ position, color, speed, swayAmount, rotSpeed, delay }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const startY = position[1];
+  const startX = position[0];
 
   useFrame(({ clock }) => {
-    if (meshRef.current) {
-      meshRef.current.position.y = position[1] + Math.sin(clock.elapsedTime * speed * 0.5) * 0.3;
-      meshRef.current.rotation.y = clock.elapsedTime * 0.3 * speed;
+    if (!meshRef.current) return;
+    const t = (clock.elapsedTime * speed + delay) % 12;
+    
+    // Fall down slowly
+    meshRef.current.position.y = startY - t * 1.2;
+    // Sway side to side
+    meshRef.current.position.x = startX + Math.sin(t * 1.5) * swayAmount;
+    meshRef.current.position.z = position[2] + Math.cos(t * 0.8) * 0.3;
+    
+    // Tumble gently
+    meshRef.current.rotation.x = t * rotSpeed * 0.5;
+    meshRef.current.rotation.y = t * rotSpeed * 0.3;
+    meshRef.current.rotation.z = Math.sin(t * 2) * 0.5;
+
+    // Fade at edges
+    const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+    if (t < 1) mat.opacity = t * 0.8;
+    else if (t > 10) mat.opacity = (12 - t) * 0.4;
+    else mat.opacity = 0.75;
+  });
+
+  return (
+    <mesh ref={meshRef} position={position} scale={[1.2, 1.2, 1]}>
+      <PetalGeometry />
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={0.3}
+        transparent
+        opacity={0.75}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+};
+
+const BlossomBranch: React.FC<{ position: [number, number, number] }> = ({ position }) => {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.z = Math.sin(clock.elapsedTime * 0.3) * 0.05;
     }
   });
 
   return (
-    <Float speed={speed} rotationIntensity={0.3} floatIntensity={0.5}>
-      <mesh ref={meshRef} position={position}>
-        <dodecahedronGeometry args={[0.12, 0]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1} transparent opacity={0.85} />
-      </mesh>
-      <pointLight position={position} color={color} intensity={1} distance={4} decay={2} />
+    <Float speed={0.5} rotationIntensity={0.1} floatIntensity={0.2}>
+      <group ref={groupRef} position={position}>
+        {/* Small glowing blossom cluster */}
+        {[0, 1, 2, 3, 4].map((i) => {
+          const angle = (i / 5) * Math.PI * 2;
+          const r = 0.15;
+          return (
+            <mesh key={i} position={[Math.cos(angle) * r, Math.sin(angle) * r, 0]}>
+              <sphereGeometry args={[0.06, 8, 8]} />
+              <meshStandardMaterial
+                color="#f0a0c0"
+                emissive="#e080a0"
+                emissiveIntensity={0.6}
+                transparent
+                opacity={0.8}
+              />
+            </mesh>
+          );
+        })}
+        {/* Center */}
+        <mesh>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshStandardMaterial color="#ffe0a0" emissive="#ffd080" emissiveIntensity={1} />
+        </mesh>
+        <pointLight color="#f0a0c0" intensity={0.5} distance={3} decay={2} />
+      </group>
     </Float>
   );
 };
@@ -34,20 +117,19 @@ const DriftingParticles: React.FC = () => {
   const ref = useRef<THREE.Points>(null);
 
   const positions = useMemo(() => {
-    const count = 400;
+    const count = 300;
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 20;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+      pos[i * 3] = (Math.random() - 0.5) * 25;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 25;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 25;
     }
     return pos;
   }, []);
 
   useFrame(({ clock }) => {
     if (ref.current) {
-      ref.current.rotation.y = clock.elapsedTime * 0.02;
-      ref.current.rotation.x = Math.sin(clock.elapsedTime * 0.01) * 0.1;
+      ref.current.rotation.y = clock.elapsedTime * 0.01;
     }
   });
 
@@ -56,12 +138,11 @@ const DriftingParticles: React.FC = () => {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.04} color="hsl(200, 70%, 65%)" transparent opacity={0.25} sizeAttenuation />
+      <pointsMaterial size={0.03} color="#f5c0d8" transparent opacity={0.3} sizeAttenuation />
     </points>
   );
 };
 
-// Camera that reacts to section changes with smooth movement
 const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; isTransitioning: boolean }> = ({ currentSection, totalSections, isTransitioning }) => {
   const targetPos = useRef(new THREE.Vector3(0, 0, 5));
   const targetLook = useRef(new THREE.Vector3(0, 0, 0));
@@ -70,7 +151,6 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
     const t = clock.elapsedTime;
     const progress = currentSection / (totalSections - 1);
 
-    // Camera spirals gently based on current section
     const angle = progress * Math.PI * 2;
     targetPos.current.set(
       Math.sin(angle) * 2 + Math.sin(t * 0.2) * 0.3,
@@ -78,7 +158,6 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
       5 - progress * 3
     );
 
-    // Smooth lerp
     const speed = isTransitioning ? 0.02 : 0.01;
     camera.position.lerp(targetPos.current, speed);
     
@@ -94,36 +173,56 @@ const ReactiveCamera: React.FC<{ currentSection: number; totalSections: number; 
 };
 
 const SceneContent: React.FC<SceneProps> = ({ currentSection, totalSections, isTransitioning }) => {
-  const lanterns = useMemo(() => {
-    const items: { position: [number, number, number]; color: string; speed: number }[] = [];
-    const colors = ['#5ba8d4', '#b070c4', '#d470a0', '#70a0d4', '#9080d4'];
-    for (let i = 0; i < 20; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = 3 + Math.random() * 6;
+  const petals = useMemo(() => {
+    const items: { position: [number, number, number]; color: string; speed: number; swayAmount: number; rotSpeed: number; delay: number }[] = [];
+    const colors = ['#e88aaf', '#f0a0c0', '#d480a0', '#f5b8d0', '#c87098', '#eea0b8'];
+    for (let i = 0; i < 40; i++) {
       items.push({
         position: [
-          Math.cos(angle) * radius,
-          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 16,
+          5 + Math.random() * 8,
           (Math.random() - 0.5) * 10,
         ],
         color: colors[i % colors.length],
-        speed: 0.5 + Math.random() * 1.5,
+        speed: 0.3 + Math.random() * 0.5,
+        swayAmount: 0.5 + Math.random() * 1.5,
+        rotSpeed: 0.5 + Math.random() * 1.5,
+        delay: Math.random() * 12,
       });
+    }
+    return items;
+  }, []);
+
+  const blossoms = useMemo(() => {
+    const items: [number, number, number][] = [];
+    for (let i = 0; i < 8; i++) {
+      items.push([
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 6,
+        -2 + (Math.random() - 0.5) * 6,
+      ]);
     }
     return items;
   }, []);
 
   return (
     <>
-      <fog attach="fog" args={['hsl(240, 15%, 8%)', 5, 25]} />
-      <ambientLight intensity={0.15} />
-      <directionalLight position={[5, 5, 10]} intensity={0.25} color="#5ba8d4" />
+      <fog attach="fog" args={['#e8dff0', 8, 30]} />
+      <ambientLight intensity={0.6} color="#fff5f8" />
+      <directionalLight position={[5, 8, 10]} intensity={0.8} color="#ffe8f0" />
+      <directionalLight position={[-3, 5, -5]} intensity={0.3} color="#d8c0f0" />
 
-      <Stars radius={30} depth={50} count={2000} factor={2.5} saturation={0.3} fade speed={0.3} />
+      {/* Soft sky particles */}
       <DriftingParticles />
 
-      {lanterns.map((lantern, i) => (
-        <Lantern key={i} {...lantern} />
+      {/* Falling plum petals */}
+      {petals.map((petal, i) => (
+        <FallingPetal key={i} {...petal} />
+      ))}
+
+      {/* Blossom clusters floating */}
+      {blossoms.map((pos, i) => (
+        <BlossomBranch key={i} position={pos} />
       ))}
 
       <ReactiveCamera currentSection={currentSection} totalSections={totalSections} isTransitioning={isTransitioning} />

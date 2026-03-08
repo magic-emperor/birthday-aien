@@ -188,7 +188,7 @@ const Index = () => {
             style={{ transformStyle: 'preserve-3d' }}
           >
             {/* Solid opaque background per section */}
-            <div className="absolute inset-0 bg-background/95 backdrop-blur-md" />
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-lg" />
 
             {/* Scrollable content container */}
             <div
