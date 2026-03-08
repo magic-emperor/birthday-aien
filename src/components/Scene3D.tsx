@@ -267,8 +267,8 @@ const MountainRange: React.FC = () => (
 // ===== DENSE GRASS FIELD using InstancedMesh for performance =====
 const GrassField: React.FC = () => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const BLADE_COUNT = 50000;
-  const ANIMATED_COUNT = 4000;
+  const BLADE_COUNT = 18000;
+  const ANIMATED_COUNT = 2000;
 
   const { matrix, bladeData } = useMemo(() => {
     const dummy = new THREE.Object3D();
@@ -279,13 +279,15 @@ const GrassField: React.FC = () => {
       const side = hash(i * 2.1) > 0.5 ? 1 : -1;
       const x = side * (10 + hash(i * 3.1) * 32);
       const z = -155 + hash(i * 5.7) * 220;
-      const height = 0.3 + hash(i * 7.3) * 0.85;
+      const height = 0.4 + hash(i * 7.3) * 0.9;
       const lean = (hash(i * 11.3) - 0.5) * 0.3;
       const rotY = hash(i * 23.1) * Math.PI;
 
       dummy.position.set(x, -2.85 + height * 0.5, z);
       dummy.rotation.set(0, rotY, lean);
-      dummy.scale.set(0.07 + hash(i * 9.1) * 0.05, height, 1);
+      dummy.scale.set(0.12 + hash(i * 9.1) * 0.1, height, 1);
+      dummy.updateMatrix();
+      dummy.matrix.toArray(matrix, i * 16);
       dummy.updateMatrix();
       dummy.matrix.toArray(matrix, i * 16);
 
