@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface Capsule {
   id: string;
@@ -32,7 +37,7 @@ const MemoryCapsulePage: React.FC = () => {
   const [openCapsuleId, setOpenCapsuleId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [newMessage, setNewMessage] = useState('');
-  const [newDate, setNewDate] = useState('');
+  const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newEmoji, setNewEmoji] = useState('💌');
 
   const fetchCapsules = async () => {
@@ -52,11 +57,11 @@ const MemoryCapsulePage: React.FC = () => {
       title: newTitle.trim(),
       message: newMessage.trim(),
       emoji: newEmoji,
-      unlock_date: new Date(newDate).toISOString(),
+      unlock_date: newDate.toISOString(),
     });
     setNewTitle('');
     setNewMessage('');
-    setNewDate('');
+    setNewDate(undefined);
     setNewEmoji('💌');
     setShowCreate(false);
     fetchCapsules();
@@ -116,7 +121,7 @@ const MemoryCapsulePage: React.FC = () => {
         </div>
 
         {/* Create form */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {showCreate && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -152,14 +157,31 @@ const MemoryCapsulePage: React.FC = () => {
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body placeholder:text-white/25 focus:outline-none focus:border-white/25 transition-all resize-none"
                 />
                 <div>
-                  <label className="text-xs text-white/40 font-body mb-1 block">Unlock on this date:</label>
-                  <input
-                    type="date"
-                    value={newDate}
-                    onChange={e => setNewDate(e.target.value)}
-                    min={format(new Date(), 'yyyy-MM-dd')}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 text-sm font-body focus:outline-none focus:border-white/25 transition-all"
-                  />
+                  <label className="text-xs text-white/40 font-body mb-2 block">Unlock on this date:</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full h-[48px] justify-start text-left font-body bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white",
+                          !newDate && "text-white/40"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newDate ? format(newDate, "MMMM d, yyyy") : "Pick an unlock date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-black/95 border-white/10 backdrop-blur-xl" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newDate}
+                        onSelect={setNewDate}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto text-white")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <button
                   onClick={createCapsule}
@@ -242,7 +264,7 @@ const MemoryCapsulePage: React.FC = () => {
       </div>
 
       {/* Read capsule modal */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {openCapsule && (
           <motion.div
             initial={{ opacity: 0 }}
