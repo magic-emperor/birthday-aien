@@ -106,35 +106,6 @@ const PartyBlasters: React.FC<{ show: boolean }> = ({ show }) => {
             </motion.div>
           ))}
 
-          {/* Center celebration */}
-          {showEmoji && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ 
-                type: 'spring',
-                damping: 10,
-                stiffness: 100,
-                delay: 0.3,
-              }}
-              className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  rotate: [0, -10, 10, 0],
-                }}
-                transition={{ 
-                  duration: 0.5,
-                  repeat: 3,
-                }}
-                className="text-6xl md:text-8xl mb-4"
-              >
-                🎉🎂🎊
-              </motion.div>
-            </motion.div>
-          )}
 
           {/* Party blaster bursts from corners */}
           <motion.div
