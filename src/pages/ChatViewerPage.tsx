@@ -1,13 +1,20 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { CalendarIcon, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface ChatMessage {
   sender: string;
   content: string;
   date: string;
   timestamp: number;
+  imageUrl?: string;
 }
 
 const parseInstagramHtml = (html: string): ChatMessage[] => {
@@ -21,16 +28,18 @@ const parseInstagramHtml = (html: string): ChatMessage[] => {
     const senderEl = block.querySelector('h2._a6-h');
     const contentEl = block.querySelector('div._a6-p');
     const dateEl = block.querySelector('div._a6-o');
+    const imgEl = block.querySelector('img');
 
-    if (senderEl && contentEl) {
+    if (senderEl) {
       const sender = senderEl.textContent?.trim() || 'Unknown';
-      const rawContent = contentEl.textContent?.trim() || '';
+      const rawContent = contentEl?.textContent?.trim() || '';
       const content = rawContent.replace(/\s+/g, ' ').trim();
       const dateStr = dateEl?.textContent?.trim() || '';
       const timestamp = dateStr ? new Date(dateStr).getTime() : 0;
+      const imageUrl = imgEl?.getAttribute('src') || undefined;
 
-      if (content && !content.startsWith('Reacted ')) {
-        messages.push({ sender, content, date: dateStr, timestamp });
+      if ((content && !content.startsWith('Reacted ')) || imageUrl) {
+        messages.push({ sender, content, date: dateStr, timestamp, imageUrl });
       }
     }
   });
@@ -40,27 +49,28 @@ const parseInstagramHtml = (html: string): ChatMessage[] => {
 
 // Helper to make URLs clickable
 const renderContentWithLinks = (content: string) => {
+  if (!content) return null;
+  
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = content.split(urlRegex);
   
   return parts.map((part, index) => {
-    if (urlRegex.test(part)) {
-      urlRegex.lastIndex = 0; // Reset regex state
+    if (part.match(/^https?:\/\//)) {
+      const isReel = part.includes('instagram.com/reel');
+      const isInsta = part.includes('instagram.com');
       return (
         <a
           key={index}
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-purple-400 hover:text-purple-300 underline break-all"
-          onClick={(e) => e.stopPropagation()}
+          className="text-purple-400 hover:text-purple-300 underline break-all inline-block"
         >
-          {part.includes('instagram.com/reel') ? '🎬 Instagram Reel' : 
-           part.includes('instagram.com') ? '📸 Instagram Link' : part}
+          {isReel ? '🎬 Instagram Reel' : isInsta ? '📸 Instagram Link' : part}
         </a>
       );
     }
-    return part;
+    return <span key={index}>{part}</span>;
   });
 };
 
@@ -74,6 +84,7 @@ const ChatViewerPage: React.FC = () => {
   const [fileName, setFileName] = useState('');
   const [senderFilter, setSenderFilter] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState(MESSAGES_PER_PAGE);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const loaderRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,15 +103,12 @@ const ChatViewerPage: React.FC = () => {
         processed++;
 
         if (processed === files.length) {
-          // Sort all messages chronologically (oldest first)
           allMessages.sort((a, b) => a.timestamp - b.timestamp);
           setMessages(prev => {
             const combined = [...prev, ...allMessages];
-            // Remove duplicates based on content + timestamp
             const unique = combined.filter((msg, idx, arr) => 
               arr.findIndex(m => m.content === msg.content && m.timestamp === msg.timestamp) === idx
             );
-            // Sort chronologically (oldest first, newest last - like Instagram)
             unique.sort((a, b) => a.timestamp - b.timestamp);
             return unique;
           });
@@ -130,10 +138,17 @@ const ChatViewerPage: React.FC = () => {
     if (senderFilter !== 'all') {
       filtered = filtered.filter(m => m.sender === senderFilter);
     }
+    if (dateRange.from) {
+      filtered = filtered.filter(m => m.timestamp >= dateRange.from!.getTime());
+    }
+    if (dateRange.to) {
+      const endOfDay = new Date(dateRange.to);
+      endOfDay.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(m => m.timestamp <= endOfDay.getTime());
+    }
     return filtered;
-  }, [messages, searchTerm, senderFilter]);
+  }, [messages, searchTerm, senderFilter, dateRange]);
 
-  // Lazy loading with Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -151,14 +166,15 @@ const ChatViewerPage: React.FC = () => {
     return () => observer.disconnect();
   }, [visibleCount, filteredMessages.length]);
 
-  // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(MESSAGES_PER_PAGE);
-  }, [searchTerm, senderFilter]);
+  }, [searchTerm, senderFilter, dateRange]);
 
   const visibleMessages = useMemo(() => {
     return filteredMessages.slice(0, visibleCount);
   }, [filteredMessages, visibleCount]);
+
+  const clearDateRange = () => setDateRange({ from: undefined, to: undefined });
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-[hsl(270,30%,8%)] via-[hsl(265,25%,12%)] to-[hsl(260,20%,6%)] overflow-y-auto">
@@ -225,7 +241,7 @@ const ChatViewerPage: React.FC = () => {
             </div>
 
             {/* Search & filter bar */}
-            <div className="sticky top-[72px] z-10 bg-black/60 backdrop-blur-xl rounded-xl p-3 mb-6 space-y-2">
+            <div className="sticky top-[72px] z-10 bg-black/60 backdrop-blur-xl rounded-xl p-3 mb-6 space-y-3">
               <div className="flex gap-2 flex-wrap">
                 <input
                   type="text"
@@ -235,7 +251,7 @@ const ChatViewerPage: React.FC = () => {
                   className="flex-1 min-w-[200px] px-4 py-2.5 rounded-lg bg-white/10 border border-white/10 text-white placeholder-white/30 font-body text-sm focus:outline-none focus:border-white/30"
                 />
                 <Select value={senderFilter} onValueChange={setSenderFilter}>
-                  <SelectTrigger className="w-[180px] h-[42px] bg-white/10 border-white/10 text-white/80 font-body focus:ring-0 focus:ring-offset-0">
+                  <SelectTrigger className="w-[150px] h-[42px] bg-white/10 border-white/10 text-white/80 font-body focus:ring-0 focus:ring-offset-0">
                     <SelectValue placeholder="All senders" />
                   </SelectTrigger>
                   <SelectContent className="bg-black/90 border-white/10 text-white/80 font-body backdrop-blur-xl">
@@ -246,6 +262,69 @@ const ChatViewerPage: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Date Range Picker */}
+              <div className="flex gap-2 flex-wrap items-center">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-[42px] justify-start text-left font-body bg-white/10 border-white/10 text-white/80 hover:bg-white/15 hover:text-white",
+                        !dateRange.from && "text-white/40"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange.from ? format(dateRange.from, "MMM d, yyyy") : "From date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-black/95 border-white/10 backdrop-blur-xl" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateRange.from}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto text-white")}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-[42px] justify-start text-left font-body bg-white/10 border-white/10 text-white/80 hover:bg-white/15 hover:text-white",
+                        !dateRange.to && "text-white/40"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange.to ? format(dateRange.to, "MMM d, yyyy") : "To date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-black/95 border-white/10 backdrop-blur-xl" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateRange.to}
+                      onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto text-white")}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {(dateRange.from || dateRange.to) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={clearDateRange}
+                    className="h-[42px] w-[42px] text-white/50 hover:text-white hover:bg-white/10"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
               <label className="cursor-pointer block">
                 <span className="text-white/30 text-xs font-body hover:text-white/50 transition-all">
                   + Upload more files
@@ -261,9 +340,12 @@ const ChatViewerPage: React.FC = () => {
             </div>
 
             {/* Results count */}
-            {searchTerm && (
+            {(searchTerm || dateRange.from || dateRange.to) && (
               <p className="text-white/30 font-body text-xs mb-4">
-                {filteredMessages.length} messages found for "{searchTerm}"
+                {filteredMessages.length} messages found
+                {searchTerm && ` for "${searchTerm}"`}
+                {dateRange.from && ` from ${format(dateRange.from, "MMM d")}`}
+                {dateRange.to && ` to ${format(dateRange.to, "MMM d")}`}
               </p>
             )}
 
@@ -287,9 +369,18 @@ const ChatViewerPage: React.FC = () => {
                       }`}
                     >
                       <p className="text-xs text-white/40 font-body mb-1">{msg.sender}</p>
-                      <p className="text-sm text-white/85 font-body leading-relaxed break-words">
-                        {renderContentWithLinks(msg.content)}
-                      </p>
+                      {msg.imageUrl && (
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="Shared image" 
+                          className="max-w-full rounded-lg mb-2 max-h-64 object-contain"
+                        />
+                      )}
+                      {msg.content && (
+                        <p className="text-sm text-white/85 font-body leading-relaxed break-words">
+                          {renderContentWithLinks(msg.content)}
+                        </p>
+                      )}
                       {msg.date && (
                         <p className="text-[10px] text-white/25 font-body mt-1.5 text-right">{msg.date}</p>
                       )}
