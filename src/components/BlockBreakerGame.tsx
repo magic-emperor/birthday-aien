@@ -361,7 +361,7 @@ const BlockBreakerGame: React.FC = () => {
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 };
 
