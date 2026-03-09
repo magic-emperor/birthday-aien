@@ -25,7 +25,6 @@ const Index = () => {
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const sectionContentRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef(0);
-  const touchStartY = useRef(0);
 
   const goToSection = useCallback((direction: 'forward' | 'backward') => {
     if (isTransitioning) return;
