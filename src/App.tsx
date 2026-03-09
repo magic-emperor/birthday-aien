@@ -8,6 +8,8 @@ import MusicPage from "./pages/MusicPage";
 import ChatViewerPage from "./pages/ChatViewerPage";
 import DreamBoardPage from "./pages/DreamBoardPage";
 import MemoryCapsulePage from "./pages/MemoryCapsulePage";
+import QuizPage from "./pages/QuizPage";
+import SecretVaultPage from "./pages/SecretVaultPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/our-chats" element={<ChatViewerPage />} />
           <Route path="/dreams" element={<DreamBoardPage />} />
           <Route path="/capsule" element={<MemoryCapsulePage />} />
+          <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/secret-vault" element={<SecretVaultPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

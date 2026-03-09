@@ -6,12 +6,14 @@ import HeroSection from '@/components/HeroSection';
 import JourneySection from '@/components/JourneySection';
 import GallerySection from '@/components/GallerySection';
 import AdventureSection from '@/components/AdventureSection';
+import TwentyFiveReasonsSection from '@/components/TwentyFiveReasonsSection';
 import BlockBreakerGame from '@/components/BlockBreakerGame';
 
 const SECTIONS = [
   { id: 'hero', Component: HeroSection, label: 'Welcome' },
   { id: 'journey', Component: JourneySection, label: 'Memories' },
   { id: 'gallery', Component: GallerySection, label: 'Gallery' },
+  { id: 'reasons', Component: TwentyFiveReasonsSection, label: '25 Reasons' },
   { id: 'adventure', Component: AdventureSection, label: 'Adventure' },
   { id: 'game', Component: BlockBreakerGame, label: 'Game' },
 ];
@@ -252,6 +254,22 @@ const Index = () => {
       </div>
 
       {/* Nav links */}
+      <a
+        href="/secret-vault"
+        className="fixed top-6 right-[20.5rem] z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label="Secret Birthday Vault"
+        style={{ pointerEvents: 'auto' }}
+      >
+        🔐
+      </a>
+      <a
+        href="/quiz"
+        className="fixed top-6 right-[17.5rem] z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
+        aria-label="Couple's Quiz"
+        style={{ pointerEvents: 'auto' }}
+      >
+        🧠
+      </a>
       <a
         href="/capsule"
         className="fixed top-6 right-[14.5rem] z-50 w-12 h-12 rounded-full bg-background/40 backdrop-blur-md border border-primary/20 flex items-center justify-center text-xl hover:bg-background/60 transition-all duration-300 shadow-lg"
