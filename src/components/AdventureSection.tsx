@@ -30,6 +30,8 @@ const storyNodes: StoryNode[] = [
       { label: "A Cozy Mountain Retreat", emoji: "🏔️", nextId: "mountain" },
       { label: "A Sunset Beach Far Away", emoji: "🌊", nextId: "beach" },
       { label: "Exploring a Vibrant City", emoji: "🏙️", nextId: "city" },
+      { label: "A Magical Forest Escape", emoji: "🌲", nextId: "forest" },
+      { label: "Under the Northern Lights", emoji: "🌌", nextId: "aurora" },
     ],
   },
   {
