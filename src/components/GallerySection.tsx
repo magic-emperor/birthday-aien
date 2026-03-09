@@ -180,6 +180,10 @@ const GallerySection: React.FC = () => {
               src={img.image_url}
               alt={img.title || 'Memory'}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Image failed to load:', img.image_url);
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.div>

@@ -468,6 +468,92 @@ const endings: Record<string, Ending> = {
     emoji: "🤝",
     gift: "A promise that you'll never experience beautiful moments alone 💑",
   },
+  // Forest adventure endings
+  ending_wishmaker: {
+    id: "ending_wishmaker",
+    title: "The Wishmaker",
+    message: "You believe in wishes, in magic, in the power of hope. Aien, at 25, may every wish you've ever made start coming true. The universe heard you. ✨",
+    emoji: "🌟",
+    gift: "A wishing well that never runs dry 🪙✨",
+  },
+  ending_peaceful: {
+    id: "ending_peaceful",
+    title: "The Peaceful One",
+    message: "In a world of chaos, you seek peace. Mehnaz, that inner calm is your superpower. At 25, may you always find your waterfall — that place where everything feels right. 🧘",
+    emoji: "☮️",
+    gift: "A sanctuary of peace, wherever you go 🌿",
+  },
+  ending_author: {
+    id: "ending_author",
+    title: "The Author",
+    message: "A blank journal — because your story isn't written yet, Aien. At 25, you hold the pen. Write something beautiful, something brave, something YOU. 📖",
+    emoji: "✍️",
+    gift: "The first chapter of your greatest story ✨",
+  },
+  ending_stargazer: {
+    id: "ending_stargazer",
+    title: "The Stargazer",
+    message: "You look up when others look down. Mehnaz, your dreams reach the stars because YOU reach for the stars. At 25, the sky isn't the limit — it's just the beginning. 🔭",
+    emoji: "⭐",
+    gift: "A constellation named after your dreams 🌠",
+  },
+  ending_self_love: {
+    id: "ending_self_love",
+    title: "The Self-Lover",
+    message: "The mirror showed you your best self — because that's who you truly are. Aien, at 25, love yourself fiercely. You deserve every bit of it. 💕",
+    emoji: "💖",
+    gift: "A reminder: You are enough, exactly as you are 🪞✨",
+  },
+  ending_blooming: {
+    id: "ending_blooming",
+    title: "The Blooming Soul",
+    message: "Like a garden of flowers, you're always growing, always blooming. Mehnaz, at 25, you're in full bloom. Stay soft, stay beautiful, stay growing. 🌸",
+    emoji: "🌺",
+    gift: "Seeds of joy to plant wherever you go 🌱",
+  },
+  // Aurora adventure endings
+  ending_rebirth: {
+    id: "ending_rebirth",
+    title: "The Phoenix",
+    message: "New beginnings are your specialty, Aien. No matter what happened before, you rise. At 25, this is your rebirth. Spread your wings. 🦋",
+    emoji: "🌱",
+    gift: "A fresh start, wrapped in green light 💚",
+  },
+  ending_resilient: {
+    id: "ending_resilient",
+    title: "The Resilient One",
+    message: "After every storm, you find the rainbow. Mehnaz, your resilience is incredible. At 25, know that nothing can break you — you only bend and bounce back stronger. 🌈",
+    emoji: "💪",
+    gift: "An unbreakable spirit — you already have it 🛡️",
+  },
+  ending_adventurer: {
+    id: "ending_adventurer",
+    title: "The Adventurer",
+    message: "You dream of adventures yet to come — and they're all waiting for you! Aien, at 25, the world is your playground. Go explore! 🚀",
+    emoji: "🗺️",
+    gift: "A ticket to your next great adventure ✈️",
+  },
+  ending_creator: {
+    id: "ending_creator",
+    title: "The Creator",
+    message: "You want to create something beautiful — because that's who you are, Mehnaz. A creator. At 25, create boldly. Your art matters. 🎨",
+    emoji: "🖼️",
+    gift: "A blank canvas and unlimited colors 🎨",
+  },
+  ending_beloved: {
+    id: "ending_beloved",
+    title: "The Beloved",
+    message: "The pink light knows what you deserve — love beyond measure. Aien, at 25, know this: you are so deeply loved. More than you'll ever know. 💕",
+    emoji: "💗",
+    gift: "Infinite love, from everyone who adores you 💝",
+  },
+  ending_serene: {
+    id: "ending_serene",
+    title: "The Serene Soul",
+    message: "Softness is your strength, peace is your power. Mehnaz, at 25, may you always feel this serene. You deserve a life that feels like a gentle hug. 🕊️",
+    emoji: "🦢",
+    gift: "A lifetime of soft, peaceful moments 🌸",
+  },
 };
 
 const AdventureSection: React.FC = () => {
