@@ -228,6 +228,7 @@ const storyNodes: StoryNode[] = [
       { label: "Ethereal green — like hope", emoji: "💚", nextId: "aurora_green" },
       { label: "Royal purple — like dreams", emoji: "💜", nextId: "aurora_purple" },
       { label: "Soft pink — like love", emoji: "💗", nextId: "aurora_pink" },
+      { label: "Take me deeper into the Arctic", emoji: "❄️", nextId: "aurora_chase" },
     ],
   },
   {
@@ -252,6 +253,58 @@ const storyNodes: StoryNode[] = [
     options: [
       { label: "Loved beyond measure", emoji: "💕", nextId: "ending_beloved" },
       { label: "Soft and at peace", emoji: "🕊️", nextId: "ending_serene" },
+    ],
+  },
+  // Deep Aurora Chase path
+  {
+    id: "aurora_chase",
+    question: "You're on an arctic aurora chase. Where does your guide take you?",
+    subtitle: "The frozen wilderness awaits...",
+    options: [
+      { label: "A frozen lake under the dancing sky", emoji: "🏔️", nextId: "aurora_lake" },
+      { label: "A cozy glass igloo with panoramic views", emoji: "🔮", nextId: "aurora_igloo" },
+      { label: "A husky sled ride through the snow", emoji: "🐕", nextId: "aurora_husky" },
+      { label: "A secret hot spring in the wilderness", emoji: "♨️", nextId: "aurora_hotspring" },
+    ],
+  },
+  {
+    id: "aurora_lake",
+    question: "Standing on the frozen lake, the aurora reflects on the ice. What do you do?",
+    subtitle: "The silence is absolute...",
+    options: [
+      { label: "Lie down on the ice and watch the sky", emoji: "🌌", nextId: "ending_infinite" },
+      { label: "Dance slowly to imaginary music", emoji: "💃", nextId: "ending_aurora_dancer" },
+      { label: "Make a snow angel under the lights", emoji: "👼", nextId: "ending_snow_angel" },
+    ],
+  },
+  {
+    id: "aurora_igloo",
+    question: "Inside the glass igloo, warm and cozy. The lights swirl overhead. What's your moment?",
+    subtitle: "Heaven has a ceiling of stars...",
+    options: [
+      { label: "Falling asleep watching the aurora", emoji: "😴", nextId: "ending_aurora_dreams" },
+      { label: "Writing down every feeling", emoji: "📝", nextId: "ending_aurora_journal" },
+      { label: "Just breathing and being present", emoji: "🧘", nextId: "ending_arctic_peace" },
+    ],
+  },
+  {
+    id: "aurora_husky",
+    question: "The huskies run through the snow, the aurora guiding your path. How do you feel?",
+    subtitle: "Freedom in its purest form...",
+    options: [
+      { label: "Alive, truly alive!", emoji: "✨", nextId: "ending_wild_spirit" },
+      { label: "Free from everything", emoji: "🕊️", nextId: "ending_arctic_freedom" },
+      { label: "Connected to something ancient", emoji: "🐺", nextId: "ending_arctic_soul" },
+    ],
+  },
+  {
+    id: "aurora_hotspring",
+    question: "Warm water, cold air, and the aurora painting the sky. Perfect moment. What's next?",
+    subtitle: "Steam rises to meet the stars...",
+    options: [
+      { label: "Close my eyes and make a wish", emoji: "🌟", nextId: "ending_arctic_wish" },
+      { label: "Stay until the very last light fades", emoji: "🌅", nextId: "ending_eternal_aurora" },
+      { label: "Promise myself to return one day", emoji: "🔄", nextId: "ending_aurora_promise" },
     ],
   },
 ];
@@ -553,6 +606,91 @@ const endings: Record<string, Ending> = {
     message: "Softness is your strength, peace is your power. Mehnaz, at 25, may you always feel this serene. You deserve a life that feels like a gentle hug. 🕊️",
     emoji: "🦢",
     gift: "A lifetime of soft, peaceful moments 🌸",
+  },
+  // Deep Aurora Chase endings
+  ending_infinite: {
+    id: "ending_infinite",
+    title: "The Infinite Dreamer",
+    message: "Lying on that frozen lake, staring at infinity — that's you, Aien. You see beyond the ordinary, beyond the limits. At 25, know that you are as vast and beautiful as that aurora sky. There are no limits to where you can go. 🌌",
+    emoji: "♾️",
+    gift: "A piece of infinity, forever in your heart 💫",
+  },
+  ending_aurora_dancer: {
+    id: "ending_aurora_dancer",
+    title: "The Aurora Dancer",
+    message: "Dancing under the northern lights — only you would think of that, Mehnaz! Your soul is made of stardust and music. At 25, keep dancing to your own rhythm. The universe dances with you. 💃",
+    emoji: "🩰",
+    gift: "The aurora's rhythm, forever in your steps ✨",
+  },
+  ending_snow_angel: {
+    id: "ending_snow_angel",
+    title: "The Snow Angel",
+    message: "A snow angel under the aurora — you bring childlike wonder to everything you do, Aien. That pure joy is rare and precious. At 25, never lose that magic. You ARE the angel in the snow. 👼",
+    emoji: "❄️",
+    gift: "Wings of light, ready whenever you need them 🌟",
+  },
+  ending_aurora_dreams: {
+    id: "ending_aurora_dreams",
+    title: "The Dreamweaver",
+    message: "Falling asleep under the aurora... your dreams must be made of magic, Mehnaz. At 25, know that the most beautiful realities start as dreams. Keep dreaming in colors. 🌈",
+    emoji: "💭",
+    gift: "A dreamcatcher woven from aurora light ✨",
+  },
+  ending_aurora_journal: {
+    id: "ending_aurora_journal",
+    title: "The Aurora Chronicler",
+    message: "Writing down every feeling — because you know moments like this are rare. Aien, your heart notices what others miss. At 25, keep writing, keep feeling, keep remembering. Your words are treasures. 📝",
+    emoji: "📖",
+    gift: "A journal with aurora-kissed pages 💜",
+  },
+  ending_arctic_peace: {
+    id: "ending_arctic_peace",
+    title: "The Present One",
+    message: "Just breathing and being present — that's the secret to life, and you know it. Mehnaz, at 25, this presence you have is everything. Be here now. The aurora is always now. 🧘",
+    emoji: "🕯️",
+    gift: "The gift of presence, forever yours 💫",
+  },
+  ending_wild_spirit: {
+    id: "ending_wild_spirit",
+    title: "The Wild Spirit",
+    message: "Truly alive! Yes, Aien! That feeling of pure aliveness — chase it always. At 25, you're meant to feel this alive every single day. The huskies, the snow, the lights — they're all YOU. Wild and free. ✨",
+    emoji: "🐺",
+    gift: "A wild heart that never stops running 🏃‍♀️",
+  },
+  ending_arctic_freedom: {
+    id: "ending_arctic_freedom",
+    title: "The Free Soul",
+    message: "Free from everything — that's what you deserve, Mehnaz. At 25, shed every chain, every worry, every 'should.' The arctic doesn't care about rules, and neither should you. Run free! 🕊️",
+    emoji: "🦅",
+    gift: "Boundless freedom, wrapped in arctic wind ❄️",
+  },
+  ending_arctic_soul: {
+    id: "ending_arctic_soul",
+    title: "The Ancient Soul",
+    message: "Connected to something ancient — because you ARE ancient, Aien. Your soul has been here before, seen these lights before. At 25, trust that wisdom inside you. It knows the way. 🐺",
+    emoji: "🌙",
+    gift: "Ancestral wisdom, whispered through the aurora 🌌",
+  },
+  ending_arctic_wish: {
+    id: "ending_arctic_wish",
+    title: "The Arctic Wisher",
+    message: "A wish made in a hot spring under the aurora — that's powerful magic, Mehnaz. At 25, know that every wish you make from your heart reaches the stars. This one will come true. 🌟",
+    emoji: "⭐",
+    gift: "One arctic wish, already on its way to you 🪄",
+  },
+  ending_eternal_aurora: {
+    id: "ending_eternal_aurora",
+    title: "The Patient Heart",
+    message: "Staying until the very last light fades — that's devotion, that's love, that's YOU, Aien. At 25, your patience and dedication are your superpowers. Beautiful things come to those who wait. 🌅",
+    emoji: "🌠",
+    gift: "An eternal aurora, forever in your memory 💜",
+  },
+  ending_aurora_promise: {
+    id: "ending_aurora_promise",
+    title: "The Promisekeeper",
+    message: "A promise to return — because you know this isn't goodbye, it's 'see you later.' Mehnaz, at 25, keep making promises to yourself. The aurora will wait for you. Always. 🔄",
+    emoji: "💫",
+    gift: "A return ticket to the aurora, valid forever ✈️❄️",
   },
 };
 
