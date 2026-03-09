@@ -83,6 +83,14 @@ const SecretVaultPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<typeof secretMessages[0] | null>(null);
   const [revealedItems, setRevealedItems] = useState<number[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [showParty, setShowParty] = useState(false);
+
+  // Trigger party when all items revealed
+  useEffect(() => {
+    if (revealedItems.length === secretMessages.length && !showParty) {
+      setShowParty(true);
+    }
+  }, [revealedItems, showParty]);
 
   // Check if it's birthday (April 7)
   const checkBirthday = () => {
