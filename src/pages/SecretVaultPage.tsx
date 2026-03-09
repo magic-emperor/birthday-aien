@@ -74,7 +74,7 @@ const secretMessages = [
 ];
 
 const SecretVaultPage: React.FC = () => {
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(true);
   const [selectedItem, setSelectedItem] = useState<typeof secretMessages[0] | null>(null);
   const [revealedItems, setRevealedItems] = useState<number[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
