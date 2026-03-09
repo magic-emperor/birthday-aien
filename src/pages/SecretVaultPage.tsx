@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Lock, Unlock, Heart, Gift, Star, Sparkles, Image, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import FallingPetals from '@/components/FallingPetals';
+import PartyBlasters from '@/components/PartyBlasters';
 
 // Secret messages - add your own!
 // Replace these placeholders with actual photos when ready
@@ -82,6 +83,14 @@ const SecretVaultPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<typeof secretMessages[0] | null>(null);
   const [revealedItems, setRevealedItems] = useState<number[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [showParty, setShowParty] = useState(false);
+
+  // Trigger party when all items revealed
+  useEffect(() => {
+    if (revealedItems.length === secretMessages.length && !showParty) {
+      setShowParty(true);
+    }
+  }, [revealedItems, showParty]);
 
   // Check if it's birthday (April 7)
   const checkBirthday = () => {
@@ -137,6 +146,7 @@ const SecretVaultPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <FallingPetals />
+      <PartyBlasters show={showParty} />
       
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/10 pointer-events-none" />
