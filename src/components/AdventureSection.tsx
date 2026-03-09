@@ -228,6 +228,7 @@ const storyNodes: StoryNode[] = [
       { label: "Ethereal green — like hope", emoji: "💚", nextId: "aurora_green" },
       { label: "Royal purple — like dreams", emoji: "💜", nextId: "aurora_purple" },
       { label: "Soft pink — like love", emoji: "💗", nextId: "aurora_pink" },
+      { label: "Take me deeper into the Arctic", emoji: "❄️", nextId: "aurora_chase" },
     ],
   },
   {
@@ -252,6 +253,58 @@ const storyNodes: StoryNode[] = [
     options: [
       { label: "Loved beyond measure", emoji: "💕", nextId: "ending_beloved" },
       { label: "Soft and at peace", emoji: "🕊️", nextId: "ending_serene" },
+    ],
+  },
+  // Deep Aurora Chase path
+  {
+    id: "aurora_chase",
+    question: "You're on an arctic aurora chase. Where does your guide take you?",
+    subtitle: "The frozen wilderness awaits...",
+    options: [
+      { label: "A frozen lake under the dancing sky", emoji: "🏔️", nextId: "aurora_lake" },
+      { label: "A cozy glass igloo with panoramic views", emoji: "🔮", nextId: "aurora_igloo" },
+      { label: "A husky sled ride through the snow", emoji: "🐕", nextId: "aurora_husky" },
+      { label: "A secret hot spring in the wilderness", emoji: "♨️", nextId: "aurora_hotspring" },
+    ],
+  },
+  {
+    id: "aurora_lake",
+    question: "Standing on the frozen lake, the aurora reflects on the ice. What do you do?",
+    subtitle: "The silence is absolute...",
+    options: [
+      { label: "Lie down on the ice and watch the sky", emoji: "🌌", nextId: "ending_infinite" },
+      { label: "Dance slowly to imaginary music", emoji: "💃", nextId: "ending_aurora_dancer" },
+      { label: "Make a snow angel under the lights", emoji: "👼", nextId: "ending_snow_angel" },
+    ],
+  },
+  {
+    id: "aurora_igloo",
+    question: "Inside the glass igloo, warm and cozy. The lights swirl overhead. What's your moment?",
+    subtitle: "Heaven has a ceiling of stars...",
+    options: [
+      { label: "Falling asleep watching the aurora", emoji: "😴", nextId: "ending_aurora_dreams" },
+      { label: "Writing down every feeling", emoji: "📝", nextId: "ending_aurora_journal" },
+      { label: "Just breathing and being present", emoji: "🧘", nextId: "ending_arctic_peace" },
+    ],
+  },
+  {
+    id: "aurora_husky",
+    question: "The huskies run through the snow, the aurora guiding your path. How do you feel?",
+    subtitle: "Freedom in its purest form...",
+    options: [
+      { label: "Alive, truly alive!", emoji: "✨", nextId: "ending_wild_spirit" },
+      { label: "Free from everything", emoji: "🕊️", nextId: "ending_arctic_freedom" },
+      { label: "Connected to something ancient", emoji: "🐺", nextId: "ending_arctic_soul" },
+    ],
+  },
+  {
+    id: "aurora_hotspring",
+    question: "Warm water, cold air, and the aurora painting the sky. Perfect moment. What's next?",
+    subtitle: "Steam rises to meet the stars...",
+    options: [
+      { label: "Close my eyes and make a wish", emoji: "🌟", nextId: "ending_arctic_wish" },
+      { label: "Stay until the very last light fades", emoji: "🌅", nextId: "ending_eternal_aurora" },
+      { label: "Promise myself to return one day", emoji: "🔄", nextId: "ending_aurora_promise" },
     ],
   },
 ];
