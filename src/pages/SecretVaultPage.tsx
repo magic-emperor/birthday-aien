@@ -5,20 +5,23 @@ import { Button } from '@/components/ui/button';
 import FallingPetals from '@/components/FallingPetals';
 
 // Secret messages - add your own!
+import specialMemory from '@/assets/special-memory.jpg';
+import favoritePhoto from '@/assets/favorite-photo.jpg';
+
 const secretMessages = [
   {
     id: 1,
     type: 'message',
     emoji: '💕',
     title: 'My First Secret',
-    content: "The moment I knew I loved you was when...",
+    content: "The moment I knew I loved you was when we first met and you were being a child with me and being mad at me 🥺💕",
   },
   {
     id: 2,
     type: 'message',
     emoji: '🌟',
     title: 'What I Adore Most',
-    content: "If I could describe you in three words: Magical. Kind. Perfect.",
+    content: "Perfect, my love and my soulmate ✨💖",
   },
   {
     id: 3,
@@ -32,7 +35,7 @@ const secretMessages = [
     type: 'image',
     emoji: '📸',
     title: 'Our Special Memory',
-    content: "/placeholder.svg", // Replace with actual image URL
+    content: specialMemory,
     caption: "Remember this moment?",
   },
   {
@@ -47,14 +50,14 @@ const secretMessages = [
     type: 'message',
     emoji: '💌',
     title: 'A Love Letter',
-    content: "Dear Mehnaz, you are the reason I believe in soulmates...",
+    content: "Aien Meri jaan, you are the reason I believe in soulmates... 💕",
   },
   {
     id: 7,
     type: 'image',
     emoji: '🌸',
     title: 'My Favorite Photo of You',
-    content: "/placeholder.svg", // Replace with actual image URL
+    content: favoritePhoto,
     caption: "You looked so beautiful here",
   },
   {
