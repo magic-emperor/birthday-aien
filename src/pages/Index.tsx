@@ -25,7 +25,6 @@ const Index = () => {
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const sectionContentRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef(0);
-  const touchStartY = useRef(0);
 
   const goToSection = useCallback((direction: 'forward' | 'backward') => {
     if (isTransitioning) return;
@@ -86,14 +85,19 @@ const Index = () => {
     return () => window.removeEventListener('wheel', handleWheel);
   }, [goToSection]);
 
-  // Touch handler for mobile
+  // Touch handler for mobile — only navigate sections at scroll boundaries
   useEffect(() => {
+    let touchStartY = 0;
+    let touchStartScrollTop = 0;
+
     const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
+      touchStartY = e.touches[0].clientY;
+      const container = sectionContentRef.current;
+      touchStartScrollTop = container ? container.scrollTop : 0;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+      const deltaY = touchStartY - e.changedTouches[0].clientY;
       const container = sectionContentRef.current;
       if (!container) return;
 
@@ -101,9 +105,13 @@ const Index = () => {
       const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
       const atTop = scrollTop <= 10;
 
-      if (deltaY > 60 && atBottom) {
+      // Only navigate if we were already at the boundary when touch started
+      const wasAtTop = touchStartScrollTop <= 10;
+      const wasAtBottom = touchStartScrollTop + clientHeight >= scrollHeight - 10;
+
+      if (deltaY > 80 && atBottom && wasAtBottom) {
         goToSection('forward');
-      } else if (deltaY < -60 && atTop) {
+      } else if (deltaY < -80 && atTop && wasAtTop) {
         goToSection('backward');
       }
     };
@@ -200,7 +208,7 @@ const Index = () => {
             <div
               ref={sectionContentRef}
               className={`relative z-10 w-full h-full overflow-y-auto overflow-x-hidden ${isNight ? 'night-mode' : ''}`}
-              style={{ scrollBehavior: 'smooth' }}
+              style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
             >
               <div className="min-h-full flex items-center justify-center py-8">
                 <CurrentComponent />
