@@ -157,7 +157,7 @@ const MemoryMatchGame: React.FC = () => {
             </p>
             <button
               onClick={initGame}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-body font-semibold hover:opacity-90 transition-opacity"
+              className="px-8 py-3 rounded-xl bg-gradient-sunset text-primary-foreground font-body font-semibold hover:opacity-90 transition-opacity"
             >
               Play Again ✦
             </button>
