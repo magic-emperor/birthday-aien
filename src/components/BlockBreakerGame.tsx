@@ -23,12 +23,12 @@ const REWARD_MESSAGES = [
 ];
 
 const BRICK_COLORS = [
-  'hsl(340, 45%, 55%)',
-  'hsl(25, 90%, 58%)',
-  'hsl(40, 85%, 55%)',
-  'hsl(20, 70%, 65%)',
-  'hsl(350, 50%, 50%)',
-  'hsl(30, 80%, 50%)',
+  'hsl(330, 70%, 60%)',  // Pink
+  'hsl(280, 60%, 55%)',  // Purple
+  'hsl(200, 70%, 55%)',  // Blue
+  'hsl(340, 80%, 65%)',  // Rose
+  'hsl(260, 65%, 60%)',  // Violet
+  'hsl(180, 60%, 50%)',  // Teal
 ];
 
 interface Brick {
