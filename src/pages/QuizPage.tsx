@@ -16,10 +16,10 @@ const questions: Question[] = [
     id: 1,
     question: "What's my favorite way to spend a lazy Sunday?",
     options: [
-      { text: "Netflix and cuddling", emoji: "📺", points: 3 },
-      { text: "Going on an adventure", emoji: "🏔️", points: 2 },
-      { text: "Cooking together", emoji: "👨‍🍳", points: 2 },
-      { text: "Reading in silence together", emoji: "📚", points: 1 },
+      { text: "Lazying out on bed all day", emoji: "🛏️", points: 3 },
+      { text: "Coding a cool new project", emoji: "💻", points: 3 },
+      { text: "Going out exploring somewhere", emoji: "🏔️", points: 2 },
+      { text: "Learning something new", emoji: "📚", points: 2 },
     ],
   },
   {
