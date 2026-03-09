@@ -229,9 +229,9 @@ const BlockBreakerGame: React.FC = () => {
       ctx.fill();
 
       // Ball glow
-      ctx.shadowColor = 'hsl(25, 90%, 58%)';
+      ctx.shadowColor = 'hsl(330, 80%, 65%)';
       ctx.shadowBlur = 15;
-      ctx.fillStyle = 'hsl(40, 85%, 55%)';
+      ctx.fillStyle = 'hsl(340, 85%, 70%)';
       ctx.beginPath();
       ctx.arc(gs.ballX, gs.ballY, BALL_R, 0, Math.PI * 2);
       ctx.fill();
