@@ -146,6 +146,7 @@ const SecretVaultPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <FallingPetals />
+      <PartyBlasters show={showParty} />
       
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/10 pointer-events-none" />
