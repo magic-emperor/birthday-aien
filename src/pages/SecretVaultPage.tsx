@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import FallingPetals from '@/components/FallingPetals';
 
 // Secret messages - add your own!
-import specialMemory from '@/assets/special-memory.jpg';
-import favoritePhoto from '@/assets/favorite-photo.jpg';
+// Replace these placeholders with actual photos when ready
+const specialMemory = "/placeholder.svg";
+const favoritePhoto = "/placeholder.svg";
 
 const secretMessages = [
   {
