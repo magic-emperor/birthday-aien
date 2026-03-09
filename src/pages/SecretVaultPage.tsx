@@ -6,9 +6,11 @@ import FallingPetals from '@/components/FallingPetals';
 import PartyBlasters from '@/components/PartyBlasters';
 
 // Secret messages - add your own!
-// Replace these placeholders with actual photos when ready
-const specialMemory = "/placeholder.svg";
-const favoritePhoto = "/placeholder.svg";
+// Add your photos to: src/assets/vault/
+// 1. special-memory.jpg
+// 2. favorite-photo.jpg
+import specialMemory from '@/assets/vault/special-memory.jpg';
+import favoritePhoto from '@/assets/vault/favorite-photo.jpg';
 
 const secretMessages = [
   {
