@@ -250,28 +250,7 @@ const BlockBreakerGame: React.FC = () => {
   }, [gameStarted, gameOver, initBricks, resetBall]);
 
   return (
-    <section className="py-32 px-4 relative">
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[400px] h-[400px] rounded-full bg-accent/5 blur-[100px]" />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="text-center mb-12 relative z-10"
-      >
-        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground mb-4 font-body">
-          Time to play
-        </p>
-        <h2 className="text-3xl md:text-5xl font-display text-gradient-sunset">
-          Birthday Brick Breaker
-        </h2>
-        <p className="text-muted-foreground mt-4 font-body text-sm max-w-md mx-auto">
-          Break bricks, collect rewards! Every 1,000 points unlocks a surprise 🎁
-        </p>
-      </motion.div>
-
+    <div className="w-full">
       <div className="max-w-lg mx-auto relative z-10">
         {!gameStarted ? (
           <motion.div
