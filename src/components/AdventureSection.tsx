@@ -134,6 +134,54 @@ const storyNodes: StoryNode[] = [
       { label: "A soft, romantic melody", emoji: "🎵", nextId: "ending_melody" },
     ],
   },
+  // City adventure path
+  {
+    id: "city",
+    question: "You're walking through a beautiful city. What catches your eye first?",
+    subtitle: "The streets are alive with possibilities...",
+    options: [
+      { label: "A cozy little café with fairy lights", emoji: "☕", nextId: "city_cafe" },
+      { label: "A stunning art museum", emoji: "🎨", nextId: "city_museum" },
+      { label: "A hidden bookstore down an alley", emoji: "📚", nextId: "city_bookstore" },
+      { label: "A rooftop with the best view", emoji: "🌃", nextId: "city_rooftop" },
+    ],
+  },
+  {
+    id: "city_cafe",
+    question: "You're at the café. What do you order?",
+    options: [
+      { label: "A fancy latte with art on top", emoji: "🎨", nextId: "ending_aesthetic" },
+      { label: "Classic chai — always hits different", emoji: "🍵", nextId: "ending_chai" },
+      { label: "Something new I've never tried", emoji: "✨", nextId: "ending_explorer" },
+    ],
+  },
+  {
+    id: "city_museum",
+    question: "In the museum, which section do you stay longest in?",
+    options: [
+      { label: "The modern abstract art", emoji: "🖼️", nextId: "ending_visionary" },
+      { label: "Historical artifacts & stories", emoji: "📜", nextId: "ending_storyteller" },
+      { label: "The photography exhibition", emoji: "📸", nextId: "ending_photographer" },
+    ],
+  },
+  {
+    id: "city_bookstore",
+    question: "You found a rare book. What's it about?",
+    options: [
+      { label: "Love letters from history", emoji: "💌", nextId: "ending_romantic_soul" },
+      { label: "Travel adventures around the world", emoji: "🗺️", nextId: "ending_wanderer" },
+      { label: "Poetry that speaks to the soul", emoji: "✒️", nextId: "ending_poet" },
+    ],
+  },
+  {
+    id: "city_rooftop",
+    question: "On the rooftop, the city lights sparkle. What's your first thought?",
+    options: [
+      { label: "I want to capture this moment forever", emoji: "📷", nextId: "ending_moment_keeper" },
+      { label: "Life is so beautiful from up here", emoji: "🌟", nextId: "ending_optimist" },
+      { label: "I wish I could share this view", emoji: "💕", nextId: "ending_sharer" },
+    ],
+  },
 ];
 
 const endings: Record<string, Ending> = {
