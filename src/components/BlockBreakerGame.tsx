@@ -201,8 +201,8 @@ const BlockBreakerGame: React.FC = () => {
 
       // Background gradient
       const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-      bgGrad.addColorStop(0, 'hsl(30, 40%, 6%)');
-      bgGrad.addColorStop(1, 'hsl(15, 60%, 10%)');
+      bgGrad.addColorStop(0, 'hsl(270, 30%, 8%)');
+      bgGrad.addColorStop(1, 'hsl(320, 40%, 12%)');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
