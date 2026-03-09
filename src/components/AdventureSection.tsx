@@ -184,6 +184,76 @@ const storyNodes: StoryNode[] = [
       { label: "I wish I could share this view", emoji: "💕", nextId: "ending_sharer" },
     ],
   },
+  // Forest adventure path
+  {
+    id: "forest",
+    question: "You're walking through an enchanted forest. What draws you deeper?",
+    subtitle: "The trees whisper secrets...",
+    options: [
+      { label: "A glowing waterfall in the distance", emoji: "💧", nextId: "forest_waterfall" },
+      { label: "A cozy treehouse with warm lights", emoji: "🏠", nextId: "forest_treehouse" },
+      { label: "A path covered in fireflies", emoji: "✨", nextId: "forest_fireflies" },
+    ],
+  },
+  {
+    id: "forest_waterfall",
+    question: "At the waterfall, the mist kisses your face. What do you do?",
+    options: [
+      { label: "Make a wish and throw a coin", emoji: "🌟", nextId: "ending_wishmaker" },
+      { label: "Just stand and feel the peace", emoji: "🧘", nextId: "ending_peaceful" },
+    ],
+  },
+  {
+    id: "forest_treehouse",
+    question: "Inside the treehouse, you find a surprise. What is it?",
+    options: [
+      { label: "A journal with blank pages", emoji: "📖", nextId: "ending_author" },
+      { label: "A telescope pointing at the sky", emoji: "🔭", nextId: "ending_stargazer" },
+    ],
+  },
+  {
+    id: "forest_fireflies",
+    question: "The fireflies lead you to a clearing. What do you see?",
+    options: [
+      { label: "A mirror reflecting your best self", emoji: "✨", nextId: "ending_self_love" },
+      { label: "A garden of your favorite flowers", emoji: "🌸", nextId: "ending_blooming" },
+    ],
+  },
+  // Aurora adventure path
+  {
+    id: "aurora",
+    question: "The Northern Lights dance above you. What color captivates you most?",
+    subtitle: "The sky is alive with magic...",
+    options: [
+      { label: "Ethereal green — like hope", emoji: "💚", nextId: "aurora_green" },
+      { label: "Royal purple — like dreams", emoji: "💜", nextId: "aurora_purple" },
+      { label: "Soft pink — like love", emoji: "💗", nextId: "aurora_pink" },
+    ],
+  },
+  {
+    id: "aurora_green",
+    question: "The green light reminds you of...",
+    options: [
+      { label: "New beginnings and fresh starts", emoji: "🌱", nextId: "ending_rebirth" },
+      { label: "The calm after every storm", emoji: "🌈", nextId: "ending_resilient" },
+    ],
+  },
+  {
+    id: "aurora_purple",
+    question: "Under the purple sky, what do you dream of?",
+    options: [
+      { label: "Adventures yet to come", emoji: "🚀", nextId: "ending_adventurer" },
+      { label: "Creating something beautiful", emoji: "🎨", nextId: "ending_creator" },
+    ],
+  },
+  {
+    id: "aurora_pink",
+    question: "The pink glow makes your heart feel...",
+    options: [
+      { label: "Loved beyond measure", emoji: "💕", nextId: "ending_beloved" },
+      { label: "Soft and at peace", emoji: "🕊️", nextId: "ending_serene" },
+    ],
+  },
 ];
 
 const endings: Record<string, Ending> = {
