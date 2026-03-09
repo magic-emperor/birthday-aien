@@ -47,7 +47,7 @@ const parseInstagramHtml = (html: string): ChatMessage[] => {
   return messages;
 };
 
-// Helper to make URLs clickable
+// Helper to make URLs clickable - opens in new window to avoid iframe issues
 const renderContentWithLinks = (content: string) => {
   if (!content) return null;
   
@@ -58,16 +58,22 @@ const renderContentWithLinks = (content: string) => {
     if (part.match(/^https?:\/\//)) {
       const isReel = part.includes('instagram.com/reel');
       const isInsta = part.includes('instagram.com');
+      
+      const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Use window.open to bypass any iframe restrictions
+        window.open(part, '_blank', 'noopener,noreferrer');
+      };
+      
       return (
-        <a
+        <button
           key={index}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-purple-400 hover:text-purple-300 underline break-all inline-block"
+          onClick={handleClick}
+          className="text-purple-400 hover:text-purple-300 underline break-all inline text-left"
         >
           {isReel ? '🎬 Instagram Reel' : isInsta ? '📸 Instagram Link' : part}
-        </a>
+        </button>
       );
     }
     return <span key={index}>{part}</span>;
