@@ -221,8 +221,8 @@ const BlockBreakerGame: React.FC = () => {
 
       // Paddle
       const paddleGrad = ctx.createLinearGradient(gs.paddleX, 0, gs.paddleX + PADDLE_W, 0);
-      paddleGrad.addColorStop(0, 'hsl(25, 90%, 58%)');
-      paddleGrad.addColorStop(1, 'hsl(340, 45%, 55%)');
+      paddleGrad.addColorStop(0, 'hsl(330, 70%, 60%)');
+      paddleGrad.addColorStop(1, 'hsl(280, 60%, 55%)');
       ctx.fillStyle = paddleGrad;
       ctx.beginPath();
       ctx.roundRect(gs.paddleX, CANVAS_H - PADDLE_H - 10, PADDLE_W, PADDLE_H, 7);
