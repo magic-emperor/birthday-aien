@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BlockBreakerGame from './BlockBreakerGame';
-import MemoryMatchGame from './MemoryMatchGame';
+import BubbleShooterGame from './BubbleShooterGame';
 
-type GameType = 'brick' | 'memory';
+type GameType = 'brick' | 'bubble';
 
 const games = [
   { id: 'brick' as GameType, name: 'Brick Breaker', emoji: '🧱', description: 'Break bricks & earn rewards!' },
-  { id: 'memory' as GameType, name: 'Memory Match', emoji: '🧠', description: 'Find matching pairs!' },
+  { id: 'bubble' as GameType, name: 'Bubble Shooter', emoji: '🫧', description: 'Pop matching bubbles!' },
 ];
 
 const GameSection: React.FC = () => {
@@ -84,7 +84,7 @@ const GameSection: React.FC = () => {
 
               {/* Game container */}
               {selectedGame === 'brick' && <BlockBreakerGame />}
-              {selectedGame === 'memory' && <MemoryMatchGame />}
+              {selectedGame === 'bubble' && <BubbleShooterGame />}
             </motion.div>
           )}
         </AnimatePresence>
