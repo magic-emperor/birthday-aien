@@ -226,19 +226,20 @@ const GallerySection: React.FC = () => {
                 alt={selectedImage.title || 'Memory'}
                 className="w-full h-full object-contain rounded-xl"
               />
-              <button
-                onClick={() => setSelectedImage(null)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white/80 hover:bg-black/70 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              <button
-                onClick={() => handleDelete(selectedImage)}
-                className="absolute bottom-4 right-4 px-4 py-2 rounded-full bg-red-500/80 text-white text-sm flex items-center gap-2 hover:bg-red-500 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <button
+                  onClick={() => handleDelete(selectedImage)}
+                  className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-500 transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setSelectedImage(null)}
+                  className="p-2 rounded-full bg-black/50 text-white/80 hover:bg-black/70 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
