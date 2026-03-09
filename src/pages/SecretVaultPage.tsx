@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Lock, Unlock, Heart, Gift, Star, Sparkles, Image, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import FallingPetals from '@/components/FallingPetals';
+import PartyBlasters from '@/components/PartyBlasters';
 
 // Secret messages - add your own!
 // Replace these placeholders with actual photos when ready
