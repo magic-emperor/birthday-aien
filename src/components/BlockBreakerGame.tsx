@@ -23,12 +23,12 @@ const REWARD_MESSAGES = [
 ];
 
 const BRICK_COLORS = [
-  'hsl(340, 45%, 55%)',
-  'hsl(25, 90%, 58%)',
-  'hsl(40, 85%, 55%)',
-  'hsl(20, 70%, 65%)',
-  'hsl(350, 50%, 50%)',
-  'hsl(30, 80%, 50%)',
+  'hsl(330, 70%, 60%)',  // Pink
+  'hsl(280, 60%, 55%)',  // Purple
+  'hsl(200, 70%, 55%)',  // Blue
+  'hsl(340, 80%, 65%)',  // Rose
+  'hsl(260, 65%, 60%)',  // Violet
+  'hsl(180, 60%, 50%)',  // Teal
 ];
 
 interface Brick {
@@ -201,8 +201,8 @@ const BlockBreakerGame: React.FC = () => {
 
       // Background gradient
       const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-      bgGrad.addColorStop(0, 'hsl(30, 40%, 6%)');
-      bgGrad.addColorStop(1, 'hsl(15, 60%, 10%)');
+      bgGrad.addColorStop(0, 'hsl(270, 30%, 8%)');
+      bgGrad.addColorStop(1, 'hsl(320, 40%, 12%)');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
@@ -221,17 +221,17 @@ const BlockBreakerGame: React.FC = () => {
 
       // Paddle
       const paddleGrad = ctx.createLinearGradient(gs.paddleX, 0, gs.paddleX + PADDLE_W, 0);
-      paddleGrad.addColorStop(0, 'hsl(25, 90%, 58%)');
-      paddleGrad.addColorStop(1, 'hsl(340, 45%, 55%)');
+      paddleGrad.addColorStop(0, 'hsl(330, 70%, 60%)');
+      paddleGrad.addColorStop(1, 'hsl(280, 60%, 55%)');
       ctx.fillStyle = paddleGrad;
       ctx.beginPath();
       ctx.roundRect(gs.paddleX, CANVAS_H - PADDLE_H - 10, PADDLE_W, PADDLE_H, 7);
       ctx.fill();
 
       // Ball glow
-      ctx.shadowColor = 'hsl(25, 90%, 58%)';
+      ctx.shadowColor = 'hsl(330, 80%, 65%)';
       ctx.shadowBlur = 15;
-      ctx.fillStyle = 'hsl(40, 85%, 55%)';
+      ctx.fillStyle = 'hsl(340, 85%, 70%)';
       ctx.beginPath();
       ctx.arc(gs.ballX, gs.ballY, BALL_R, 0, Math.PI * 2);
       ctx.fill();
@@ -250,28 +250,7 @@ const BlockBreakerGame: React.FC = () => {
   }, [gameStarted, gameOver, initBricks, resetBall]);
 
   return (
-    <section className="py-32 px-4 relative">
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[400px] h-[400px] rounded-full bg-accent/5 blur-[100px]" />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="text-center mb-12 relative z-10"
-      >
-        <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground mb-4 font-body">
-          Time to play
-        </p>
-        <h2 className="text-3xl md:text-5xl font-display text-gradient-sunset">
-          Birthday Brick Breaker
-        </h2>
-        <p className="text-muted-foreground mt-4 font-body text-sm max-w-md mx-auto">
-          Break bricks, collect rewards! Every 1,000 points unlocks a surprise 🎁
-        </p>
-      </motion.div>
-
+    <div className="w-full">
       <div className="max-w-lg mx-auto relative z-10">
         {!gameStarted ? (
           <motion.div
@@ -382,7 +361,7 @@ const BlockBreakerGame: React.FC = () => {
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 };
 

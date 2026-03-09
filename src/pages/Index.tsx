@@ -7,7 +7,7 @@ import JourneySection from '@/components/JourneySection';
 import GallerySection from '@/components/GallerySection';
 import AdventureSection from '@/components/AdventureSection';
 import TwentyFiveReasonsSection from '@/components/TwentyFiveReasonsSection';
-import BlockBreakerGame from '@/components/BlockBreakerGame';
+import GameSection from '@/components/GameSection';
 
 const SECTIONS = [
   { id: 'hero', Component: HeroSection, label: 'Welcome' },
@@ -15,7 +15,7 @@ const SECTIONS = [
   { id: 'gallery', Component: GallerySection, label: 'Gallery' },
   { id: 'reasons', Component: TwentyFiveReasonsSection, label: '25 Reasons' },
   { id: 'adventure', Component: AdventureSection, label: 'Adventure' },
-  { id: 'game', Component: BlockBreakerGame, label: 'Game' },
+  { id: 'game', Component: GameSection, label: 'Games' },
 ];
 
 const Index = () => {
