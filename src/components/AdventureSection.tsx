@@ -30,6 +30,8 @@ const storyNodes: StoryNode[] = [
       { label: "A Cozy Mountain Retreat", emoji: "🏔️", nextId: "mountain" },
       { label: "A Sunset Beach Far Away", emoji: "🌊", nextId: "beach" },
       { label: "Exploring a Vibrant City", emoji: "🏙️", nextId: "city" },
+      { label: "A Magical Forest Escape", emoji: "🌲", nextId: "forest" },
+      { label: "Under the Northern Lights", emoji: "🌌", nextId: "aurora" },
     ],
   },
   {
@@ -180,6 +182,76 @@ const storyNodes: StoryNode[] = [
       { label: "I want to capture this moment forever", emoji: "📷", nextId: "ending_moment_keeper" },
       { label: "Life is so beautiful from up here", emoji: "🌟", nextId: "ending_optimist" },
       { label: "I wish I could share this view", emoji: "💕", nextId: "ending_sharer" },
+    ],
+  },
+  // Forest adventure path
+  {
+    id: "forest",
+    question: "You're walking through an enchanted forest. What draws you deeper?",
+    subtitle: "The trees whisper secrets...",
+    options: [
+      { label: "A glowing waterfall in the distance", emoji: "💧", nextId: "forest_waterfall" },
+      { label: "A cozy treehouse with warm lights", emoji: "🏠", nextId: "forest_treehouse" },
+      { label: "A path covered in fireflies", emoji: "✨", nextId: "forest_fireflies" },
+    ],
+  },
+  {
+    id: "forest_waterfall",
+    question: "At the waterfall, the mist kisses your face. What do you do?",
+    options: [
+      { label: "Make a wish and throw a coin", emoji: "🌟", nextId: "ending_wishmaker" },
+      { label: "Just stand and feel the peace", emoji: "🧘", nextId: "ending_peaceful" },
+    ],
+  },
+  {
+    id: "forest_treehouse",
+    question: "Inside the treehouse, you find a surprise. What is it?",
+    options: [
+      { label: "A journal with blank pages", emoji: "📖", nextId: "ending_author" },
+      { label: "A telescope pointing at the sky", emoji: "🔭", nextId: "ending_stargazer" },
+    ],
+  },
+  {
+    id: "forest_fireflies",
+    question: "The fireflies lead you to a clearing. What do you see?",
+    options: [
+      { label: "A mirror reflecting your best self", emoji: "✨", nextId: "ending_self_love" },
+      { label: "A garden of your favorite flowers", emoji: "🌸", nextId: "ending_blooming" },
+    ],
+  },
+  // Aurora adventure path
+  {
+    id: "aurora",
+    question: "The Northern Lights dance above you. What color captivates you most?",
+    subtitle: "The sky is alive with magic...",
+    options: [
+      { label: "Ethereal green — like hope", emoji: "💚", nextId: "aurora_green" },
+      { label: "Royal purple — like dreams", emoji: "💜", nextId: "aurora_purple" },
+      { label: "Soft pink — like love", emoji: "💗", nextId: "aurora_pink" },
+    ],
+  },
+  {
+    id: "aurora_green",
+    question: "The green light reminds you of...",
+    options: [
+      { label: "New beginnings and fresh starts", emoji: "🌱", nextId: "ending_rebirth" },
+      { label: "The calm after every storm", emoji: "🌈", nextId: "ending_resilient" },
+    ],
+  },
+  {
+    id: "aurora_purple",
+    question: "Under the purple sky, what do you dream of?",
+    options: [
+      { label: "Adventures yet to come", emoji: "🚀", nextId: "ending_adventurer" },
+      { label: "Creating something beautiful", emoji: "🎨", nextId: "ending_creator" },
+    ],
+  },
+  {
+    id: "aurora_pink",
+    question: "The pink glow makes your heart feel...",
+    options: [
+      { label: "Loved beyond measure", emoji: "💕", nextId: "ending_beloved" },
+      { label: "Soft and at peace", emoji: "🕊️", nextId: "ending_serene" },
     ],
   },
 ];
@@ -395,6 +467,92 @@ const endings: Record<string, Ending> = {
     message: "Your first thought is to share — that's pure gold, Mehnaz. At 25, know that your generosity comes back to you tenfold. The view is always better shared, and you make every moment better. 💕",
     emoji: "🤝",
     gift: "A promise that you'll never experience beautiful moments alone 💑",
+  },
+  // Forest adventure endings
+  ending_wishmaker: {
+    id: "ending_wishmaker",
+    title: "The Wishmaker",
+    message: "You believe in wishes, in magic, in the power of hope. Aien, at 25, may every wish you've ever made start coming true. The universe heard you. ✨",
+    emoji: "🌟",
+    gift: "A wishing well that never runs dry 🪙✨",
+  },
+  ending_peaceful: {
+    id: "ending_peaceful",
+    title: "The Peaceful One",
+    message: "In a world of chaos, you seek peace. Mehnaz, that inner calm is your superpower. At 25, may you always find your waterfall — that place where everything feels right. 🧘",
+    emoji: "☮️",
+    gift: "A sanctuary of peace, wherever you go 🌿",
+  },
+  ending_author: {
+    id: "ending_author",
+    title: "The Author",
+    message: "A blank journal — because your story isn't written yet, Aien. At 25, you hold the pen. Write something beautiful, something brave, something YOU. 📖",
+    emoji: "✍️",
+    gift: "The first chapter of your greatest story ✨",
+  },
+  ending_stargazer: {
+    id: "ending_stargazer",
+    title: "The Stargazer",
+    message: "You look up when others look down. Mehnaz, your dreams reach the stars because YOU reach for the stars. At 25, the sky isn't the limit — it's just the beginning. 🔭",
+    emoji: "⭐",
+    gift: "A constellation named after your dreams 🌠",
+  },
+  ending_self_love: {
+    id: "ending_self_love",
+    title: "The Self-Lover",
+    message: "The mirror showed you your best self — because that's who you truly are. Aien, at 25, love yourself fiercely. You deserve every bit of it. 💕",
+    emoji: "💖",
+    gift: "A reminder: You are enough, exactly as you are 🪞✨",
+  },
+  ending_blooming: {
+    id: "ending_blooming",
+    title: "The Blooming Soul",
+    message: "Like a garden of flowers, you're always growing, always blooming. Mehnaz, at 25, you're in full bloom. Stay soft, stay beautiful, stay growing. 🌸",
+    emoji: "🌺",
+    gift: "Seeds of joy to plant wherever you go 🌱",
+  },
+  // Aurora adventure endings
+  ending_rebirth: {
+    id: "ending_rebirth",
+    title: "The Phoenix",
+    message: "New beginnings are your specialty, Aien. No matter what happened before, you rise. At 25, this is your rebirth. Spread your wings. 🦋",
+    emoji: "🌱",
+    gift: "A fresh start, wrapped in green light 💚",
+  },
+  ending_resilient: {
+    id: "ending_resilient",
+    title: "The Resilient One",
+    message: "After every storm, you find the rainbow. Mehnaz, your resilience is incredible. At 25, know that nothing can break you — you only bend and bounce back stronger. 🌈",
+    emoji: "💪",
+    gift: "An unbreakable spirit — you already have it 🛡️",
+  },
+  ending_adventurer: {
+    id: "ending_adventurer",
+    title: "The Adventurer",
+    message: "You dream of adventures yet to come — and they're all waiting for you! Aien, at 25, the world is your playground. Go explore! 🚀",
+    emoji: "🗺️",
+    gift: "A ticket to your next great adventure ✈️",
+  },
+  ending_creator: {
+    id: "ending_creator",
+    title: "The Creator",
+    message: "You want to create something beautiful — because that's who you are, Mehnaz. A creator. At 25, create boldly. Your art matters. 🎨",
+    emoji: "🖼️",
+    gift: "A blank canvas and unlimited colors 🎨",
+  },
+  ending_beloved: {
+    id: "ending_beloved",
+    title: "The Beloved",
+    message: "The pink light knows what you deserve — love beyond measure. Aien, at 25, know this: you are so deeply loved. More than you'll ever know. 💕",
+    emoji: "💗",
+    gift: "Infinite love, from everyone who adores you 💝",
+  },
+  ending_serene: {
+    id: "ending_serene",
+    title: "The Serene Soul",
+    message: "Softness is your strength, peace is your power. Mehnaz, at 25, may you always feel this serene. You deserve a life that feels like a gentle hug. 🕊️",
+    emoji: "🦢",
+    gift: "A lifetime of soft, peaceful moments 🌸",
   },
 };
 
