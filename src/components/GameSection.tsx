@@ -84,7 +84,7 @@ const GameSection: React.FC = () => {
 
               {/* Game container */}
               {selectedGame === 'brick' && <BlockBreakerGame />}
-              {selectedGame === 'memory' && <MemoryMatchGame />}
+              {selectedGame === 'bubble' && <BubbleShooterGame />}
             </motion.div>
           )}
         </AnimatePresence>
