@@ -94,24 +94,24 @@ const SecretVaultPage: React.FC = () => {
     }
   }, [revealedItems, showParty]);
 
-  // Check if it's birthday (April 7)
+  // Check if it's birthday (April 8 IST)
   const checkBirthday = () => {
     const now = new Date();
-    const birthdayMonth = 3; // April (0-indexed)
-    const birthdayDay = 7;
-    
-    return now.getMonth() === birthdayMonth && now.getDate() === birthdayDay;
+    // Convert to IST to check
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + (istOffset + now.getTimezoneOffset() * 60 * 1000));
+    return istNow.getMonth() === 3 && istNow.getDate() === 8; // April 8
   };
 
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
       const currentYear = now.getFullYear();
-      let birthday = new Date(currentYear, 3, 7); // April 7
+      let birthday = new Date(`${currentYear}-04-08T00:00:00+05:30`);
 
       // If birthday has passed this year, use next year
       if (now > birthday) {
-        birthday = new Date(currentYear + 1, 3, 7);
+        birthday = new Date(`${currentYear + 1}-04-08T00:00:00+05:30`);
       }
 
       // Check if it's birthday
