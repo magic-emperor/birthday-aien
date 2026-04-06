@@ -51,13 +51,20 @@ const secretMessages = [
   },
   {
     id: 6,
-    type: 'message',
-    emoji: '💌',
-    title: 'A Love Letter',
-    content: "Aien Meri jaan, you are the reason I believe in soulmates... 💕",
+    type: 'poem',
+    emoji: '📝',
+    title: 'A Poem For You',
+    content: `In a world of billion stars above,\nYou shine the brightest, my only love.\nEvery heartbeat whispers your name,\nSince you came, nothing's the same.\n\nYour laughter is my favorite song,\nWith you is where I belong.\nHappy Birthday, my heart, my light —\nYou make everything feel right. ♥`,
   },
   {
     id: 7,
+    type: 'message',
+    emoji: '💌',
+    title: 'A Love Letter',
+    content: "Aien Meri jaan, you are the reason I believe in soulmates. Every moment with you feels like a dream I never want to wake up from. You're not just my love — you're my home. 💕",
+  },
+  {
+    id: 8,
     type: 'image',
     emoji: '🌸',
     title: 'My Favorite Photo of You',
@@ -65,14 +72,37 @@ const secretMessages = [
     caption: "You looked so beautiful here",
   },
   {
-    id: 8,
+    id: 9,
     type: 'message',
     emoji: '🎂',
     title: 'Birthday Confession',
     content: "I've been planning this for months just to see you smile today!",
   },
   {
-    id: 9,
+    id: 10,
+    type: 'poem',
+    emoji: '🌹',
+    title: 'Roses For You',
+    content: `Roses are red, violets are blue,\nBut nothing in this world compares to you.\nYour eyes hold galaxies, your smile holds the sun,\nMy love for you has only just begun.\n\nI'll write you poems till the stars grow old,\nYour love is worth more than all the world's gold.`,
+  },
+  {
+    id: 11,
+    type: 'voice',
+    emoji: '🎙️',
+    title: 'A Voice Message',
+    content: "🎧 A special voice message is waiting for you! Ask me to play it for you in person — some things are better said out loud. 💫",
+    link: '',
+  },
+  {
+    id: 12,
+    type: 'voice',
+    emoji: '🎬',
+    title: 'A Video Surprise',
+    content: "🎥 I've recorded a special video just for you. Let's watch it together — it'll make you cry (happy tears only!) 🥹💕",
+    link: '',
+  },
+  {
+    id: 13,
     type: 'message',
     emoji: '💫',
     title: 'Our Future',
@@ -94,24 +124,24 @@ const SecretVaultPage: React.FC = () => {
     }
   }, [revealedItems, showParty]);
 
-  // Check if it's birthday (April 7)
+  // Check if it's birthday (April 8 IST)
   const checkBirthday = () => {
     const now = new Date();
-    const birthdayMonth = 3; // April (0-indexed)
-    const birthdayDay = 7;
-    
-    return now.getMonth() === birthdayMonth && now.getDate() === birthdayDay;
+    // Convert to IST to check
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + (istOffset + now.getTimezoneOffset() * 60 * 1000));
+    return istNow.getMonth() === 3 && istNow.getDate() === 8; // April 8
   };
 
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
       const currentYear = now.getFullYear();
-      let birthday = new Date(currentYear, 3, 7); // April 7
+      let birthday = new Date(`${currentYear}-04-08T00:00:00+05:30`);
 
       // If birthday has passed this year, use next year
       if (now > birthday) {
-        birthday = new Date(currentYear + 1, 3, 7);
+        birthday = new Date(`${currentYear + 1}-04-08T00:00:00+05:30`);
       }
 
       // Check if it's birthday
@@ -383,6 +413,28 @@ const SecretVaultPage: React.FC = () => {
                       <p className="text-muted-foreground font-body italic">
                         {(selectedItem as any).caption}
                       </p>
+                    </div>
+                  ) : selectedItem.type === 'poem' ? (
+                    <div className="mb-6 bg-primary/5 rounded-xl p-5 border border-primary/10">
+                      <p className="text-base font-body text-foreground/80 whitespace-pre-line italic leading-relaxed">
+                        {selectedItem.content}
+                      </p>
+                    </div>
+                  ) : selectedItem.type === 'voice' ? (
+                    <div className="mb-6">
+                      <p className="text-lg font-body text-foreground/80 mb-4">
+                        {selectedItem.content}
+                      </p>
+                      {(selectedItem as any).link && (
+                        <a
+                          href={(selectedItem as any).link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-body hover:bg-primary/30 transition-colors"
+                        >
+                          ▶ Play Now
+                        </a>
+                      )}
                     </div>
                   ) : (
                     <p className="text-lg font-body text-foreground/80 mb-6">
