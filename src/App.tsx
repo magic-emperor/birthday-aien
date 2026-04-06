@@ -11,6 +11,7 @@ import MemoryCapsulePage from "./pages/MemoryCapsulePage";
 import QuizPage from "./pages/QuizPage";
 import SecretVaultPage from "./pages/SecretVaultPage";
 import NotFound from "./pages/NotFound";
+import BackgroundMusic from "./components/BackgroundMusic";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <BackgroundMusic />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
