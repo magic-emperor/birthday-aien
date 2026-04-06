@@ -9,10 +9,10 @@ const CountdownTimer: React.FC = () => {
     const calculateTime = () => {
       const now = new Date();
       const currentYear = now.getFullYear();
-      let birthday = new Date(currentYear, 3, 7); // April 7
+      let birthday = new Date(`${currentYear}-04-08T00:00:00+05:30`);
 
       if (now > birthday) {
-        birthday = new Date(currentYear + 1, 3, 7);
+        birthday = new Date(`${currentYear + 1}-04-08T00:00:00+05:30`);
       }
 
       const diff = birthday.getTime() - now.getTime();
