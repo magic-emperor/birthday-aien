@@ -414,6 +414,28 @@ const SecretVaultPage: React.FC = () => {
                         {(selectedItem as any).caption}
                       </p>
                     </div>
+                  ) : selectedItem.type === 'poem' ? (
+                    <div className="mb-6 bg-primary/5 rounded-xl p-5 border border-primary/10">
+                      <p className="text-base font-body text-foreground/80 whitespace-pre-line italic leading-relaxed">
+                        {selectedItem.content}
+                      </p>
+                    </div>
+                  ) : selectedItem.type === 'voice' ? (
+                    <div className="mb-6">
+                      <p className="text-lg font-body text-foreground/80 mb-4">
+                        {selectedItem.content}
+                      </p>
+                      {(selectedItem as any).link && (
+                        <a
+                          href={(selectedItem as any).link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-body hover:bg-primary/30 transition-colors"
+                        >
+                          ▶ Play Now
+                        </a>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-lg font-body text-foreground/80 mb-6">
                       {selectedItem.content}
