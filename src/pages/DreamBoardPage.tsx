@@ -32,10 +32,13 @@ const DreamBoardPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
 
   const fetchDreams = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('dreams')
       .select('*')
       .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching dreams:', error);
+    }
     if (data) setDreams(data as Dream[]);
     setLoading(false);
   };
