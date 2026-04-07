@@ -150,14 +150,18 @@ const MusicPage: React.FC = () => {
               >
                 {isAudioOnly ? (
                   <>
-                    <iframe
-                      src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&rel=0`}
-                      title="Audio playback"
-                      allow="autoplay; encrypted-media"
-                      className="fixed"
-                      style={{ width: 1, height: 1, top: -9999, left: -9999, opacity: 0, pointerEvents: 'none' }}
-                    />
-                    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 py-12 px-6 max-w-md mx-auto">
+                    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 max-w-md mx-auto">
+                      <div className="relative w-full" style={{ height: 1, overflow: 'hidden', opacity: 0 }}>
+                        <iframe
+                          src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&playsinline=1&rel=0`}
+                          title="Audio playback"
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                          className="absolute inset-0 w-full"
+                          style={{ height: 200 }}
+                        />
+                      </div>
+                      <div className="py-12 px-6">
                       <div className="flex items-end justify-center gap-1 h-20 mb-6">
                         {audioBars.map((bar, i) => (
                           <motion.div
