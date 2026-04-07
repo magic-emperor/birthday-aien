@@ -150,33 +150,38 @@ const MusicPage: React.FC = () => {
               >
                 {isAudioOnly ? (
                   <>
-                    <iframe
-                      src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&rel=0`}
-                      title="Audio playback"
-                      allow="autoplay; encrypted-media"
-                      className="fixed"
-                      style={{ width: 1, height: 1, top: -9999, left: -9999, opacity: 0, pointerEvents: 'none' }}
-                    />
-                    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 py-12 px-6 max-w-md mx-auto">
-                      <div className="flex items-end justify-center gap-1 h-20 mb-6">
-                        {audioBars.map((bar, i) => (
-                          <motion.div
-                            key={i}
-                            className="w-1.5 rounded-full bg-gradient-to-t from-white/20 to-white/60"
-                            animate={{ height: [bar.height * 0.3, bar.height, bar.height * 0.5, bar.height * 0.8, bar.height * 0.3] }}
-                            transition={{ duration: 1.2, repeat: Infinity, delay: bar.delay, ease: 'easeInOut' }}
-                          />
-                        ))}
+                    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 max-w-md mx-auto">
+                      <div className="relative w-full" style={{ height: 1, overflow: 'hidden', opacity: 0 }}>
+                        <iframe
+                          src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&playsinline=1&rel=0`}
+                          title="Audio playback"
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                          className="absolute inset-0 w-full"
+                          style={{ height: 200 }}
+                        />
                       </div>
-                      <p className="text-center text-white/60 font-body text-sm font-medium">{currentSong.name}</p>
-                      <p className="text-center text-white/30 font-body text-xs mt-1">{currentSong.artist}</p>
+                      <div className="py-12 px-6">
+                        <div className="flex items-end justify-center gap-1 h-20 mb-6">
+                          {audioBars.map((bar, i) => (
+                            <motion.div
+                              key={i}
+                              className="w-1.5 rounded-full bg-gradient-to-t from-white/20 to-white/60"
+                              animate={{ height: [bar.height * 0.3, bar.height, bar.height * 0.5, bar.height * 0.8, bar.height * 0.3] }}
+                              transition={{ duration: 1.2, repeat: Infinity, delay: bar.delay, ease: 'easeInOut' }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-center text-white/60 font-body text-sm font-medium">{currentSong.name}</p>
+                        <p className="text-center text-white/30 font-body text-xs mt-1">{currentSong.artist}</p>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
                     <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                       <iframe
-                        src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&rel=0`}
+                        src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&playsinline=1&rel=0`}
                         title="YouTube player"
                         allow="autoplay; encrypted-media"
                         allowFullScreen
