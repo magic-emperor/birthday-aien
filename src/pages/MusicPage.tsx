@@ -181,7 +181,7 @@ const MusicPage: React.FC = () => {
                   <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
                     <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                       <iframe
-                        src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&rel=0`}
+                        src={`https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&playsinline=1&rel=0`}
                         title="YouTube player"
                         allow="autoplay; encrypted-media"
                         allowFullScreen
